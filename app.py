@@ -111,55 +111,19 @@ def index():
 
 # ... (中略) ...
 
+@app.route('/api/character')
+@login_required
 def get_character_data():
-    if current_user.is_authenticated:
-        character = current_user.character
-    else:
-        # ログインしていない場合はダミーキャラクターを作成
-        class DummyCharacter:
-            def __init__(self):
-                self.id = 0
-                self.user_id = 0
-                self.money = 100
-                self.current_exp = 0
-                self.required_exp = 10
-                self.level = 1
-                self.attack = 10
-                self.defense = 10
-                self.hp = 50
-                self.max_hp = 50
-                self.intelligence = 10
-                self.agility = 10
-                self.luck = 5
-                self.charisma = 5
-                self.equip_right_hand = "なし"
-                self.equip_left_hand = "なし"
-                self.equip_head = "なし"
-                self.equip_face_upper = "なし"
-                self.equip_face_middle = "なし"
-                self.equip_face_lower = "なし"
-                self.equip_ears = "なし"
-                self.equip_body = "なし"
-                self.equip_arms = "なし"
-                self.equip_hands = "なし"
-                self.equip_waist = "なし"
-                self.equip_legs = "なし"
-                self.equip_shoes = "なし"
-                self.equip_accessory1 = "なし"
-                self.equip_accessory2 = "なし"
-                self.active_skills = ""
-                self.passive_skills = ""
-                self.image_url = "Farah.png"
-        character = DummyCharacter()
-
-    # フォールバックとして、もしキャラクターが存在しなければ作成 (ログイン時のみ)
-    if current_user.is_authenticated and not character:
-        character = Character(user_id=current_user.id, image_url="Farah.png")
+    character = current_user.character
+    
+    # ログインしているのにキャラクターが存在しない場合 (通常は起こらないはず)
+    if not character:
+        character = Character(user_id=current_user.id)
         db.session.add(character)
         db.session.commit()
 
     character_data = {
-        'username': current_user.username if current_user.is_authenticated else "ゲスト",
+        'username': current_user.username,
         'money': character.money,
         'current_exp': character.current_exp,
         'required_exp': character.required_exp,
@@ -189,9 +153,8 @@ def get_character_data():
         'equip_accessory2': character.equip_accessory2,
         'active_skills': character.active_skills,
         'passive_skills': character.passive_skills,
-        'image_url': "Farah.png" # ここで強制的に上書き
+        'image_url': character.image_url # DBから取得した値を使用
     }
-    print(f"DEBUG: image_url being returned: {character_data['image_url']}")
     return jsonify(character_data)
 
 
