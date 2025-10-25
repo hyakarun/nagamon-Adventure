@@ -1,0 +1,12 @@
+# Service account key
+serviceAccountKey.json
+
+# Database files
+*.db
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS-specific files
+.DS_Store
