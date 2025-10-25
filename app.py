@@ -213,11 +213,8 @@ class BattleEnemy:
 
 def run_battle(player_char, enemies):
     detailed_log = []
-    combatants = [player_char] + enemies
-    
-    # 素早さ順に行動順を決定
-    combatants.sort(key=lambda x: x.agility, reverse=True)
-    
+    initial_combatants = [player_char] + enemies
+
     # 初期状態をログに記録
     current_state = {
         'message': "戦闘開始！",
@@ -228,48 +225,67 @@ def run_battle(player_char, enemies):
     }
     detailed_log.append(current_state)
 
-    for enemy in enemies:
-        current_state = {
-            'message': f"{enemy.name} が現れた！",
-            'player_hp': player_char.hp,
-            'player_max_hp': player_char.max_hp,
-            'player_is_alive': player_char.is_alive,
-            'enemies_state': [{'name': e.name, 'hp': e.hp, 'max_hp': e.max_hp, 'is_alive': e.is_alive} for e in enemies]
-        }
-        detailed_log.append(current_state)
-
     turn = 0
+    max_turns = 60
+    timed_out = False
+
     while player_char.is_alive and any(e.is_alive for e in enemies):
         turn += 1
+        if turn > max_turns:
+            timed_out = True
+            break
+
         turn_message = f"\n--- ターン {turn} ---"
-        current_state = {
+        detailed_log.append({
             'message': turn_message,
             'player_hp': player_char.hp,
             'player_max_hp': player_char.max_hp,
             'player_is_alive': player_char.is_alive,
             'enemies_state': [{'name': e.name, 'hp': e.hp, 'max_hp': e.max_hp, 'is_alive': e.is_alive} for e in enemies]
-        }
-        detailed_log.append(current_state)
+        })
         
-        for combatant in combatants:
+        # --- 新しい攻撃順決定ロジック ---
+        action_order = []
+        turn_combatants = [c for c in initial_combatants if c.is_alive]
+        
+        while turn_combatants:
+            total_agility = sum(c.agility for c in turn_combatants)
+            # 全員の素早さが0の場合のフォールバック
+            if total_agility == 0:
+                actor = random.choice(turn_combatants)
+            else:
+                weights = [c.agility / total_agility for c in turn_combatants]
+                actor = random.choices(turn_combatants, weights=weights, k=1)[0]
+            
+            action_order.append(actor)
+            turn_combatants.remove(actor)
+
+        for combatant in action_order:
             if not combatant.is_alive:
                 continue
 
             # ターゲットを決定
             if combatant == player_char:
-                # プレイヤーの攻撃
                 targets = [e for e in enemies if e.is_alive]
                 if not targets:
                     break
                 target = random.choice(targets)
                 actor_name = "プレイヤー"
             else:
-                # 敵の攻撃
                 target = player_char
                 actor_name = combatant.name
 
-            # ダメージ計算（簡易版）
-            damage = max(1, combatant.attack - target.defense)
+            # --- 新しいダメージ計算ロジック ---
+            base_damage = combatant.attack
+            # 防御力が0の場合のゼロ除算を避ける
+            target_defense = target.defense if target.defense > 0 else 1
+            damage_modifier = combatant.attack / target_defense
+            random_modifier = random.uniform(0.9, 1.1)
+            
+            damage = int(base_damage * damage_modifier * random_modifier)
+            if damage < 1:
+                damage = 1
+            
             target.hp -= damage
             action_message = f"{actor_name} の攻撃！ {target.name if target != player_char else 'プレイヤー'} に {damage} のダメージ！"
 
@@ -279,18 +295,32 @@ def run_battle(player_char, enemies):
                 action_message += f" {target.name if target != player_char else 'プレイヤー'} は倒れた。"
             
             # 各行動後に状態をログに記録
-            current_state = {
+            detailed_log.append({
                 'message': action_message,
                 'player_hp': player_char.hp,
                 'player_max_hp': player_char.max_hp,
                 'player_is_alive': player_char.is_alive,
                 'enemies_state': [{'name': e.name, 'hp': e.hp, 'max_hp': e.max_hp, 'is_alive': e.is_alive} for e in enemies]
-            }
-            detailed_log.append(current_state)
+            })
 
     # 戦闘結果
     result = {'outcome': '', 'exp_gained': 0, 'items_found': []}
-    if player_char.is_alive:
+    if timed_out:
+        result['outcome'] = 'lose'
+        detailed_log.append({
+            'message': f"\n{max_turns}ターンが経過し、時間切れとなった...。",
+            'player_hp': player_char.hp,
+            'player_max_hp': player_char.max_hp,
+            'player_is_alive': player_char.is_alive,
+            'enemies_state': [{'name': e.name, 'hp': e.hp, 'max_hp': e.max_hp, 'is_alive': e.is_alive} for e in enemies]
+        })
+        # 時間切れでもペナルティ
+        penalty = int(player_char.money * 0.1)
+        player_char.money -= penalty
+        if player_char.money < 0:
+            player_char.money = 0
+
+    elif player_char.is_alive:
         result['outcome'] = 'win'
         exp_total = sum(e.exp_yield for e in enemies)
         result['exp_gained'] = exp_total
@@ -301,10 +331,8 @@ def run_battle(player_char, enemies):
             'player_is_alive': player_char.is_alive,
             'enemies_state': [{'name': e.name, 'hp': e.hp, 'max_hp': e.max_hp, 'is_alive': e.is_alive} for e in enemies]
         })
-        # TODO: レベルアップ処理
         player_char.current_exp += exp_total
 
-        # TODO: アイテムドロップ処理
     else:
         result['outcome'] = 'lose'
         detailed_log.append({
