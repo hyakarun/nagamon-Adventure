@@ -74,6 +74,16 @@ class Character(db.Model):
     # キャラクター画像
     image_url = db.Column(db.String(255), default="Farah.png")
 
+class Enemy(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    max_hp = db.Column(db.Integer, nullable=False)
+    attack = db.Column(db.Integer, nullable=False)
+    defense = db.Column(db.Integer, nullable=False)
+    agility = db.Column(db.Integer, nullable=False)
+    exp_yield = db.Column(db.Integer, nullable=False)
+    image_url = db.Column(db.String(255), nullable=False)
+
 @app.before_request
 def create_tables():
     db.create_all()
@@ -188,16 +198,17 @@ def get_character_data():
 # --- Battle Logic ---
 import random
 
-class Enemy:
-    def __init__(self, name, hp, attack, defense, agility, exp_yield, item_drops=None):
-        self.name = name
-        self.max_hp = hp
-        self.hp = hp
-        self.attack = attack
-        self.defense = defense
-        self.agility = agility
-        self.exp_yield = exp_yield
-        self.item_drops = item_drops if item_drops else []
+class BattleEnemy:
+    def __init__(self, enemy_template):
+        self.name = enemy_template.name
+        self.max_hp = enemy_template.max_hp
+        self.hp = enemy_template.max_hp
+        self.attack = enemy_template.attack
+        self.defense = enemy_template.defense
+        self.agility = enemy_template.agility
+        self.exp_yield = enemy_template.exp_yield
+        self.image_url = enemy_template.image_url # image_url を追加
+        self.item_drops = [] # TODO: アイテムドロップを実装
         self.is_alive = True
 
 def run_battle(player_char, enemies):
@@ -334,13 +345,27 @@ def start_battle(dungeon_id):
     # ダンジョンIDに基づいて敵を生成
     enemies = []
     if dungeon_id == 'dungeon1':
-        enemies.append(Enemy(name="スライム", hp=20, attack=8, defense=5, agility=5, exp_yield=5))
-        enemies.append(Enemy(name="ゴブリン", hp=30, attack=12, defense=8, agility=8, exp_yield=10))
+        # TODO: ダンジョンと敵の関連付けをDBで行う
+        slime_template = Enemy.query.filter_by(name="スライム").first()
+        goblin_template = Enemy.query.filter_by(name="ゴブリン").first()
+        if slime_template:
+            enemies.append(BattleEnemy(slime_template))
+        if goblin_template:
+            enemies.append(BattleEnemy(goblin_template))
+            
     elif dungeon_id == 'dungeon2':
-        enemies.append(Enemy(name="オーク", hp=50, attack=15, defense=12, agility=6, exp_yield=20))
-        enemies.append(Enemy(name="スケルトン", hp=35, attack=14, defense=10, agility=10, exp_yield=15))
+        # TODO: ダンジョンと敵の関連付けをDBで行う
+        orc_template = Enemy.query.filter_by(name="オーク").first()
+        skeleton_template = Enemy.query.filter_by(name="スケルトン").first()
+        if orc_template:
+            enemies.append(BattleEnemy(orc_template))
+        if skeleton_template:
+            enemies.append(BattleEnemy(skeleton_template))
     else:
         return jsonify({'error': '無効なダンジョンです'}), 404
+
+    if not enemies:
+        return jsonify({'error': 'ダンジョンに敵が見つかりませんでした'}), 404
 
     # 戦闘実行
     detailed_log, result = run_battle(player_char, enemies)
@@ -363,7 +388,7 @@ def start_battle(dungeon_id):
         'image_url': player_char.image_url # image_url を追加
     }
     enemies_initial_stats = [
-        {'name': e.name, 'hp': e.max_hp, 'max_hp': e.max_hp} for e in enemies
+        {'name': e.name, 'hp': e.max_hp, 'max_hp': e.max_hp, 'image_url': e.image_url} for e in enemies
     ]
 
     response_data = {
@@ -389,7 +414,22 @@ def recover_hp():
     else:
         return jsonify({'success': False, 'message': 'Character not found.'}), 404
 
-if __name__ == '__main__':
+def setup_database(app):
     with app.app_context():
         db.create_all()
+
+        # 敵の初期データ
+        if Enemy.query.first() is None:
+            enemies = [
+                Enemy(name="スライム", max_hp=20, attack=8, defense=5, agility=5, exp_yield=5, image_url="enemy1.png"),
+                Enemy(name="ゴブリン", max_hp=30, attack=12, defense=8, agility=8, exp_yield=10, image_url="enemy2.png"),
+                Enemy(name="オーク", max_hp=50, attack=15, defense=12, agility=6, exp_yield=20, image_url="orc.png"),
+                Enemy(name="スケルトン", max_hp=35, attack=14, defense=10, agility=10, exp_yield=15, image_url="skeleton.png")
+            ]
+            db.session.bulk_save_objects(enemies)
+            db.session.commit()
+            print("Added initial enemy data.")
+
+if __name__ == '__main__':
+    setup_database(app)
     app.run(debug=True)

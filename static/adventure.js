@@ -9,14 +9,7 @@ const resultArea = document.getElementById('battle-result-area');
 
 // --- Helper Functions ---
 
-// 敵の画像URLをマッピング
-const enemyImageMap = {
-    "スライム": "enemy1.png",
-    "ゴブリン": "enemy2.png",
-    "オーク": "orc.png",
-    "スケルトン": "skeleton.png",
-    // 他の敵もここに追加
-};
+
 
 /**
  * Renders a health bar for a combatant.
@@ -85,7 +78,8 @@ function renderBattleResults(data) {
             const enemyInfoDiv = document.createElement('div');
             enemyInfoDiv.classList.add('combatant-info');
             if (enemy.is_alive) {
-                const enemyImageFilename = enemyImageMap[enemy.name] || 'default_enemy.png';
+                const enemyMasterData = data.enemies.find(e => e.name === enemy.name);
+                const enemyImageFilename = enemyMasterData ? enemyMasterData.image_url : 'default_enemy.png';
                 enemyInfoDiv.innerHTML = `
                     <img src="/static/images/${enemyImageFilename}" alt="${enemy.name}" class="combatant-image">
                     <div class="combatant-stats">
