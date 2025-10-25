@@ -1,4 +1,4 @@
-import { loadAndDisplayCharacterData } from './home.js';
+import { loadAndDisplayCharacterData, startHpRecovery, stopHpRecovery } from './home.js';
 
 let registerScreen;
 let homeScreen;
@@ -14,6 +14,7 @@ export function showRegisterScreen() {
     if (registerScreen) registerScreen.classList.remove('hidden');
     if (homeScreen) homeScreen.classList.add('hidden');
     if (adventureScreen) adventureScreen.classList.add('hidden');
+    stopHpRecovery(); // HP回復を停止
 }
 
 export function showHomeScreen() {
@@ -21,11 +22,13 @@ export function showHomeScreen() {
     if (registerScreen) registerScreen.classList.add('hidden');
     if (adventureScreen) adventureScreen.classList.add('hidden');
     loadAndDisplayCharacterData();
+    startHpRecovery(); // HP回復を開始
 }
 
 export function showAdventureScreen() {
     if (adventureScreen) adventureScreen.classList.remove('hidden');
     if (registerScreen) registerScreen.classList.add('hidden');
     if (homeScreen) homeScreen.classList.add('hidden');
+    stopHpRecovery(); // HP回復を停止
     // showScene('start'); // Will be called from adventure.js
 }

@@ -376,8 +376,20 @@ def start_battle(dungeon_id):
     return jsonify(response_data)
 
 
+@app.route('/api/character/recover_hp', methods=['POST'])
+@login_required
+def recover_hp():
+    character = current_user.character
+    if character and character.hp < character.max_hp:
+        character.hp += 1
+        db.session.commit()
+        return jsonify({'success': True, 'hp': character.hp, 'max_hp': character.max_hp})
+    elif character:
+        return jsonify({'success': False, 'message': 'HP is already full.', 'hp': character.hp, 'max_hp': character.max_hp})
+    else:
+        return jsonify({'success': False, 'message': 'Character not found.'}), 404
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
     app.run(debug=True)
-

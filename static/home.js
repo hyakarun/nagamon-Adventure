@@ -1,5 +1,3 @@
-import { showAdventureScreen } from './screens.js';
-
 // APIからキャラクターデータを取得し、ホーム画面を更新する
 export async function loadAndDisplayCharacterData() {
     try {
@@ -62,5 +60,70 @@ export async function loadAndDisplayCharacterData() {
 
     } catch (error) {
         console.error('キャラクターデータのロード中にエラーが発生しました:', error);
+    }
+}
+
+let hpRecoveryTimer = null;
+
+export function startHpRecovery() {
+    // すでにタイマーが動いていれば何もしない
+    if (hpRecoveryTimer) {
+        return;
+    }
+
+    hpRecoveryTimer = setInterval(async () => {
+        try {
+            const response = await fetch('/api/character/recover_hp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                // サーバーエラーなどでタイマーを停止
+                console.error('HP回復リクエストに失敗しました。', response.statusText);
+                clearInterval(hpRecoveryTimer);
+                hpRecoveryTimer = null;
+                return;
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                console.log('HPが1回復しました。', data.hp);
+                // 画面のHP表示を更新
+                const charHpElement = document.getElementById('char-hp');
+                if (charHpElement) {
+                    charHpElement.textContent = data.hp;
+                }
+
+                // HPが満タンになったらタイマーを停止
+                if (data.hp >= data.max_hp) {
+                    console.log('HPが満タンになりました。回復を停止します。');
+                    clearInterval(hpRecoveryTimer);
+                    hpRecoveryTimer = null;
+                }
+            } else {
+                // HPが満タンなどの理由で回復しなかった場合もタイマーを停止
+                if (data.message === 'HP is already full.') {
+                    console.log('HPはすでに満タンです。');
+                    clearInterval(hpRecoveryTimer);
+                    hpRecoveryTimer = null;
+                }
+            }
+        } catch (error) {
+            console.error('HP回復処理中にエラーが発生しました:', error);
+            clearInterval(hpRecoveryTimer);
+            hpRecoveryTimer = null;
+        }
+    }, 10000); // 10秒ごと
+}
+
+export function stopHpRecovery() {
+    if (hpRecoveryTimer) {
+        clearInterval(hpRecoveryTimer);
+        hpRecoveryTimer = null;
+        console.log('HP回復を停止しました。');
     }
 }
