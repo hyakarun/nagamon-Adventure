@@ -9,14 +9,14 @@ from firebase_admin import credentials, auth
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "supersecretkey"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///C:/Users/kazuto/OneDrive/ドキュメント/Apps/AdventureGame/users3.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'users3.db')}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
 # Firebase Admin SDK initialization
 # サービスアカウントキーファイル名を指定
-cred = credentials.Certificate("C:\\Users\\kazuto\\OneDrive\\ドキュメント\\Apps\\AdventureGame\\serviceAccountKey.json")
+cred = credentials.Certificate(os.path.join(os.path.dirname(__file__), "serviceAccountKey.json"))
 firebase_admin.initialize_app(cred)
 
 # Flask-Login setup
@@ -293,13 +293,24 @@ def run_battle(player_char, enemies):
                 target = player_char
                 actor_name = combatant.name
 
-            # --- 新しいダメージ計算ロジック (再修正) ---
-            # ダメージ = 2 * 攻撃力 - 防御力
-            base_damage = max(1, 2 * combatant.attack - target.defense)
+            # --- 仕様書に基づく新しいダメージ計算ロジック ---
+            base_damage = combatant.attack
+
+            # 防御力による補正
+            # 攻撃が0の場合のゼロ除算を避ける
+            if combatant.attack > 0:
+                defense_modifier = (combatant.attack - target.defense) / combatant.attack
+            else:
+                defense_modifier = 0
             
+            # 補正率を±50%に制限
+            defense_modifier = max(-0.5, min(0.5, defense_modifier))
+            
+            modified_damage = base_damage * (1 + defense_modifier)
+
             # 乱数補正 (±10%)
             random_modifier = random.uniform(0.9, 1.1)
-            damage = int(base_damage * random_modifier)
+            damage = int(modified_damage * random_modifier)
 
             if damage < 1:
                 damage = 1
@@ -411,12 +422,29 @@ def start_battle(dungeon_id_str):
     if not dungeon_enemies:
         return jsonify({'error': 'ダンジョンに敵が見つかりませんでした'}), 404
 
+    # 画像が存在する敵のみを抽選対象にする
+    available_enemies = []
+    images_path = os.path.join(os.path.dirname(__file__), 'static', 'images')
+    for de in dungeon_enemies:
+        enemy_template = db.session.get(Enemy, de.enemy_id)
+        if enemy_template:
+            image_path = os.path.join(images_path, enemy_template.image_url)
+            if os.path.exists(image_path):
+                available_enemies.append(de)
+
+    if not available_enemies:
+        return jsonify({'error': '表示可能な敵が見つかりませんでした'}), 404
+
     # 出現する敵の中からランダムに選択 (例として3体)
     # spawn_rate を考慮した抽選を行う
-    enemy_candidates = [de.enemy_id for de in dungeon_enemies]
-    spawn_rates = [de.spawn_rate for de in dungeon_enemies]
+    enemy_candidates = [de.enemy_id for de in available_enemies]
+    spawn_rates = [de.spawn_rate for de in available_enemies]
     
     num_enemies = 3 # 仮に3体出現
+    # 候補が3体より少ない場合は、いるだけ出現させる
+    if len(enemy_candidates) < num_enemies:
+        num_enemies = len(enemy_candidates)
+
     selected_enemy_ids = random.choices(enemy_candidates, weights=spawn_rates, k=num_enemies)
 
     enemies = []
