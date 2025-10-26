@@ -117,6 +117,16 @@ class Enemy(db.Model):
     exp_yield = db.Column(db.Integer, nullable=False)
     image_url = db.Column(db.String(255), nullable=False)
 
+class Dungeon(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+
+class DungeonEnemy(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    dungeon_id = db.Column(db.Integer, db.ForeignKey('dungeon.id'), nullable=False)
+    enemy_id = db.Column(db.Integer, db.ForeignKey('enemy.id'), nullable=False)
+    spawn_rate = db.Column(db.Integer, nullable=False)
+
 @app.before_request
 def create_tables():
     db.create_all()
@@ -357,8 +367,8 @@ def run_battle(player_char, enemies):
     
     return detailed_log, result
 
-@app.route('/api/battle/<dungeon_id>')
-def start_battle(dungeon_id):
+@app.route('/api/battle/<dungeon_id_str>')
+def start_battle(dungeon_id_str):
     if current_user.is_authenticated:
         player_char = current_user.character
     else:
@@ -381,28 +391,42 @@ def start_battle(dungeon_id):
         player_char = DummyPlayerChar()
     # 戦闘ロジックで使うための一時的なステータス
     player_char.is_alive = True
-    # player_char.max_hp = player_char.hp # この行は削除または修正
 
-    # ダンジョンIDに基づいて敵を生成
-    enemies = []
-    if dungeon_id == 'dungeon1':
-        # TODO: ダンジョンと敵の関連付けをDBで行う
-        enemy1 = db.session.get(Enemy, 1)
-        enemy2 = db.session.get(Enemy, 2)
-        if enemy1: enemies.append(BattleEnemy(enemy1))
-        if enemy2: enemies.append(BattleEnemy(enemy2))
-            
-    elif dungeon_id == 'dungeon2':
-        # TODO: ダンジョンと敵の関連付けをDBで行う
-        enemy3 = db.session.get(Enemy, 3)
-        enemy4 = db.session.get(Enemy, 4)
-        if enemy3: enemies.append(BattleEnemy(enemy3))
-        if enemy4: enemies.append(BattleEnemy(enemy4))
-    else:
+    # ダンジョンID(文字列)に基づいてダンジョンを決定
+    dungeon_name = None
+    if dungeon_id_str == 'dungeon1':
+        dungeon_name = '始まるの森'
+    # elif dungeon_id_str == 'dungeon2':
+    #     dungeon_name = 'ゴブリンの洞窟' # マスターデータに存在しない
+    
+    if not dungeon_name:
         return jsonify({'error': '無効なダンジョンです'}), 404
 
-    if not enemies:
+    dungeon = Dungeon.query.filter_by(name=dungeon_name).first()
+    if not dungeon:
+        return jsonify({'error': 'ダンジョンが見つかりませんでした'}), 404
+
+    # ダンジョンに出現する敵を取得
+    dungeon_enemies = DungeonEnemy.query.filter_by(dungeon_id=dungeon.id).all()
+    if not dungeon_enemies:
         return jsonify({'error': 'ダンジョンに敵が見つかりませんでした'}), 404
+
+    # 出現する敵の中からランダムに選択 (例として3体)
+    # spawn_rate を考慮した抽選を行う
+    enemy_candidates = [de.enemy_id for de in dungeon_enemies]
+    spawn_rates = [de.spawn_rate for de in dungeon_enemies]
+    
+    num_enemies = 3 # 仮に3体出現
+    selected_enemy_ids = random.choices(enemy_candidates, weights=spawn_rates, k=num_enemies)
+
+    enemies = []
+    for enemy_id in selected_enemy_ids:
+        enemy_template = db.session.get(Enemy, enemy_id)
+        if enemy_template:
+            enemies.append(BattleEnemy(enemy_template))
+
+    if not enemies:
+        return jsonify({'error': '戦闘に出現する敵を準備できませんでした'}), 404
 
     # 戦闘実行
     detailed_log, result = run_battle(player_char, enemies)
@@ -460,7 +484,7 @@ def setup_database(app):
             # 既存の敵データをすべて削除
             Enemy.query.delete()
             
-            csv_path = os.path.join(os.path.dirname(__file__), 'masterdata', 'adventure_enemylist - シート1 (1).csv')
+            csv_path = os.path.join(os.path.dirname(__file__), 'masterdata', 'enemies.csv')
             with open(csv_path, newline='', encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile)
                 header = next(reader) # ヘッダー行をスキップ
@@ -490,6 +514,55 @@ def setup_database(app):
             print("Enemy CSV file not found. Skipping data loading.")
         except Exception as e:
             print(f"Error loading enemy data: {e}")
+            db.session.rollback()
+
+        # CSVからダンジョンデータを読み込み
+        try:
+            # 既存のダンジョンデータをすべて削除
+            DungeonEnemy.query.delete()
+            Dungeon.query.delete()
+
+            dungeon_csv_path = os.path.join(os.path.dirname(__file__), 'masterdata', 'dungeons.csv')
+            with open(dungeon_csv_path, newline='', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile)
+                header = next(reader) # ヘッダー行をスキップ
+
+                col_map = {col_name: i for i, col_name in enumerate(header)}
+
+                dungeons = {} # dungeon_name をキーにして Dungeon オブジェクトをキャッシュ
+                for row in reader:
+                    if not row:
+                        continue
+                    
+                    dungeon_name = row[col_map['dungeon_name']]
+                    enemy_id = int(row[col_map['enemy_id']])
+                    spawn_rate = int(row[col_map['spawn_rate']])
+
+                    # Dungeon オブジェクトを取得または作成
+                    if dungeon_name in dungeons:
+                        dungeon = dungeons[dungeon_name]
+                    else:
+                        dungeon = Dungeon.query.filter_by(name=dungeon_name).first()
+                        if not dungeon:
+                            dungeon = Dungeon(name=dungeon_name)
+                            db.session.add(dungeon)
+                            db.session.flush() # id を確定させる
+                        dungeons[dungeon_name] = dungeon
+
+                    dungeon_enemy = DungeonEnemy(
+                        dungeon_id=dungeon.id,
+                        enemy_id=enemy_id,
+                        spawn_rate=spawn_rate
+                    )
+                    db.session.add(dungeon_enemy)
+            
+            db.session.commit()
+            print("Loaded dungeon data from CSV.")
+
+        except FileNotFoundError:
+            print("Dungeon CSV file not found. Skipping data loading.")
+        except Exception as e:
+            print(f"Error loading dungeon data: {e}")
             db.session.rollback()
 
 if __name__ == '__main__':
