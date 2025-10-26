@@ -2,13 +2,14 @@ from flask import Flask, render_template, redirect, url_for, flash, request, jso
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
 import os
+import csv
 
 import firebase_admin
 from firebase_admin import credentials, auth
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "supersecretkey"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///C:/Users/kazuto/OneDrive/ドキュメント/Apps/AdventureGame/users2.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///C:/Users/kazuto/OneDrive/ドキュメント/Apps/AdventureGame/users3.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
@@ -29,7 +30,7 @@ class User(UserMixin, db.Model):
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
 class Character(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -41,14 +42,46 @@ class Character(db.Model):
     current_exp = db.Column(db.Integer, default=0)
     required_exp = db.Column(db.Integer, default=10)
     level = db.Column(db.Integer, default=1)
-    attack = db.Column(db.Integer, default=10)
-    defense = db.Column(db.Integer, default=10)
-    hp = db.Column(db.Integer, default=50)
-    max_hp = db.Column(db.Integer, default=50)
+    
+    # 新しい基本ステータス
+    strength = db.Column(db.Integer, default=10)
+    vitality = db.Column(db.Integer, default=10)
     intelligence = db.Column(db.Integer, default=10)
     agility = db.Column(db.Integer, default=10)
     luck = db.Column(db.Integer, default=5)
     charisma = db.Column(db.Integer, default=5)
+
+    # 現在HPはDBに保存
+    _hp = db.Column("hp", db.Integer)
+
+    def __init__(self, **kwargs):
+        super(Character, self).__init__(**kwargs)
+        if self._hp is None:
+            self._hp = self.max_hp
+
+    # 派生ステータス (DBには保存されない)
+    @property
+    def attack(self):
+        # 仮の計算式: 攻撃力 = 力
+        return self.strength
+
+    @property
+    def defense(self):
+        # 仮の計算式: 防御力 = 体力
+        return self.vitality
+
+    @property
+    def max_hp(self):
+        # 仮の計算式: 最大HP = 体力 * 5 + レベル * 5
+        return self.vitality * 5 + self.level * 5
+    
+    @property
+    def hp(self):
+        return self._hp
+
+    @hp.setter
+    def hp(self, value):
+        self._hp = max(0, min(value, self.max_hp))
     
     # 装備
     equip_right_hand = db.Column(db.String(100), default="なし")
@@ -100,7 +133,17 @@ def index():
             db.session.add(user)
             db.session.flush() # IDを確定
             
-            character = Character(user_id=user.id, image_url="Farah.png") # 明示的に設定
+            character = Character(
+                user_id=user.id, 
+                image_url="Farah.png",
+                strength=10,
+                vitality=10,
+                intelligence=10,
+                agility=10,
+                luck=5,
+                charisma=5,
+                level=1
+            ) # ステータスの初期値を設定
             db.session.add(character)
             db.session.commit()
         
@@ -132,6 +175,8 @@ def get_character_data():
         'defense': character.defense,
         'hp': character.hp,
         'max_hp': character.max_hp,
+        'strength': character.strength,
+        'vitality': character.vitality,
         'intelligence': character.intelligence,
         'agility': character.agility,
         'luck': character.luck,
@@ -238,14 +283,14 @@ def run_battle(player_char, enemies):
                 target = player_char
                 actor_name = combatant.name
 
-            # --- 新しいダメージ計算ロジック ---
-            base_damage = combatant.attack
-            # 防御力が0の場合のゼロ除算を避ける
-            target_defense = target.defense if target.defense > 0 else 1
-            damage_modifier = combatant.attack / target_defense
-            random_modifier = random.uniform(0.9, 1.1)
+            # --- 新しいダメージ計算ロジック (再修正) ---
+            # ダメージ = 2 * 攻撃力 - 防御力
+            base_damage = max(1, 2 * combatant.attack - target.defense)
             
-            damage = int(base_damage * damage_modifier * random_modifier)
+            # 乱数補正 (±10%)
+            random_modifier = random.uniform(0.9, 1.1)
+            damage = int(base_damage * random_modifier)
+
             if damage < 1:
                 damage = 1
             
@@ -320,14 +365,19 @@ def start_battle(dungeon_id):
         # ログインしていない場合はダミーキャラクターを作成
         class DummyPlayerChar:
             def __init__(self):
-                self.hp = 50
-                self.max_hp = 50
-                self.attack = 10
-                self.defense = 10
+                self.strength = 10
+                self.vitality = 10
+                self.level = 1
                 self.agility = 10
-                self.current_exp = 0 # ダミーなので経験値は更新しない
+                self.current_exp = 0
                 self.is_alive = True
-                self.image_url = "Farah.png" # image_url を追加
+                self.image_url = "Farah.png"
+                
+                # プロパティを模倣
+                self.attack = self.strength
+                self.defense = self.vitality
+                self.max_hp = self.vitality * 5 + self.level * 5
+                self.hp = self.max_hp
         player_char = DummyPlayerChar()
     # 戦闘ロジックで使うための一時的なステータス
     player_char.is_alive = True
@@ -337,21 +387,17 @@ def start_battle(dungeon_id):
     enemies = []
     if dungeon_id == 'dungeon1':
         # TODO: ダンジョンと敵の関連付けをDBで行う
-        slime_template = Enemy.query.filter_by(name="スライム").first()
-        goblin_template = Enemy.query.filter_by(name="ゴブリン").first()
-        if slime_template:
-            enemies.append(BattleEnemy(slime_template))
-        if goblin_template:
-            enemies.append(BattleEnemy(goblin_template))
+        enemy1 = db.session.get(Enemy, 1)
+        enemy2 = db.session.get(Enemy, 2)
+        if enemy1: enemies.append(BattleEnemy(enemy1))
+        if enemy2: enemies.append(BattleEnemy(enemy2))
             
     elif dungeon_id == 'dungeon2':
         # TODO: ダンジョンと敵の関連付けをDBで行う
-        orc_template = Enemy.query.filter_by(name="オーク").first()
-        skeleton_template = Enemy.query.filter_by(name="スケルトン").first()
-        if orc_template:
-            enemies.append(BattleEnemy(orc_template))
-        if skeleton_template:
-            enemies.append(BattleEnemy(skeleton_template))
+        enemy3 = db.session.get(Enemy, 3)
+        enemy4 = db.session.get(Enemy, 4)
+        if enemy3: enemies.append(BattleEnemy(enemy3))
+        if enemy4: enemies.append(BattleEnemy(enemy4))
     else:
         return jsonify({'error': '無効なダンジョンです'}), 404
 
@@ -409,17 +455,42 @@ def setup_database(app):
     with app.app_context():
         db.create_all()
 
-        # 敵の初期データ
-        if Enemy.query.first() is None:
-            enemies = [
-                Enemy(name="スライム", max_hp=20, attack=8, defense=5, agility=5, exp_yield=5, image_url="enemy1.png"),
-                Enemy(name="ゴブリン", max_hp=30, attack=12, defense=8, agility=8, exp_yield=10, image_url="enemy2.png"),
-                Enemy(name="オーク", max_hp=50, attack=15, defense=12, agility=6, exp_yield=20, image_url="orc.png"),
-                Enemy(name="スケルトン", max_hp=35, attack=14, defense=10, agility=10, exp_yield=15, image_url="skeleton.png")
-            ]
-            db.session.bulk_save_objects(enemies)
+        # CSVから敵データを読み込み
+        try:
+            # 既存の敵データをすべて削除
+            Enemy.query.delete()
+            
+            csv_path = os.path.join(os.path.dirname(__file__), 'masterdata', 'adventure_enemylist - シート1 (1).csv')
+            with open(csv_path, newline='', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile)
+                header = next(reader) # ヘッダー行をスキップ
+
+                # ヘッダーのマッピング
+                col_map = {col_name: i for i, col_name in enumerate(header)}
+
+                for row in reader:
+                    if not row or not row[col_map['name']]:
+                        continue
+
+                    enemy = Enemy(
+                        name=row[col_map['name']],
+                        max_hp=int(row[col_map['hp']]),
+                        attack=int(row[col_map['atk']]),
+                        defense=int(row[col_map['def']]),
+                        agility=int(row[col_map['agi']]),
+                        exp_yield=int(row[col_map['exp']]),
+                        image_url=row[col_map['image_url']]
+                    )
+                    db.session.add(enemy)
+            
             db.session.commit()
-            print("Added initial enemy data.")
+            print("Loaded enemy data from CSV.")
+
+        except FileNotFoundError:
+            print("Enemy CSV file not found. Skipping data loading.")
+        except Exception as e:
+            print(f"Error loading enemy data: {e}")
+            db.session.rollback()
 
 if __name__ == '__main__':
     setup_database(app)

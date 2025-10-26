@@ -24,8 +24,11 @@ export async function loadAndDisplayCharacterData() {
         document.getElementById('char-required-exp').textContent = data.required_exp;
         document.getElementById('char-money').textContent = data.money;
         document.getElementById('char-hp').textContent = data.hp;
+        document.getElementById('char-max-hp').textContent = data.max_hp;
         document.getElementById('char-attack').textContent = data.attack;
         document.getElementById('char-defense').textContent = data.defense;
+        document.getElementById('char-strength').textContent = data.strength;
+        document.getElementById('char-vitality').textContent = data.vitality;
         document.getElementById('char-intelligence').textContent = data.intelligence;
         document.getElementById('char-agility').textContent = data.agility;
         document.getElementById('char-luck').textContent = data.luck;
