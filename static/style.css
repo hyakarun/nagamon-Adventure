@@ -270,14 +270,12 @@ body {
 }
 
 .player-state-wrapper {
-    flex: 1; /* プレイヤー側の幅を広げる */
     display: flex;
     flex-direction: column;
     align-items: flex-start; /* 左寄せにする */
 }
 
 .enemies-state-wrapper {
-    flex: 1; /* 敵側も同様に幅を広げる */
     display: flex;
     flex-direction: column; /* 敵を縦に並べる */
     align-items: flex-end; /* 右寄せにする */
@@ -288,11 +286,10 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    flex: 1 1 200px; /* flex-grow, flex-shrink, flex-basis */
 }
 
 .combatant-stats {
-    flex: 1;
+    width: 300px; /* HPバーを含む領域の幅を300pxに固定 */
 }
 
 .combatant-image {
@@ -343,6 +340,7 @@ body {
     color: white;
     text-shadow: 1px 1px 1px black;
     font-size: 0.8em;
+    white-space: nowrap; /* テキストが改行されないようにする */
 }
 
 .defeated-enemy {
