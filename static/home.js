@@ -37,7 +37,9 @@ export async function loadAndDisplayCharacterData() {
         // --- キャラクター画像の更新 ---
         // 画像は /static/images/ ディレクトリにあると仮定
         const imageUrl = `/static/images/${data.image_url}`;
-        document.getElementById('character-image').src = imageUrl;
+        document.getElementById('character-image-1').src = imageUrl;
+        document.getElementById('character-image-2').src = imageUrl;
+        document.getElementById('character-image-3').src = imageUrl;
 
 
         // --- 装備パネルの更新 ---
@@ -61,8 +63,34 @@ export async function loadAndDisplayCharacterData() {
         document.getElementById('active-skills').textContent = data.active_skills || "なし";
         document.getElementById('passive-skills').textContent = data.passive_skills || "なし";
 
+        loadAndDisplayDungeons();
+
     } catch (error) {
         console.error('キャラクターデータのロード中にエラーが発生しました:', error);
+    }
+}
+
+export async function loadAndDisplayDungeons() {
+    try {
+        const response = await fetch('/api/dungeons');
+        if (!response.ok) {
+            console.error('ダンジョンデータの取得に失敗しました。', response.statusText);
+            return;
+        }
+
+        const dungeons = await response.json();
+        const dungeonSelect = document.getElementById('dungeon-select');
+        dungeonSelect.innerHTML = ''; // プルダウンをクリア
+
+        dungeons.forEach(dungeon => {
+            const option = document.createElement('option');
+            option.value = dungeon.id;
+            option.textContent = dungeon.name;
+            dungeonSelect.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error('ダンジョンデータのロード中にエラーが発生しました:', error);
     }
 }
 

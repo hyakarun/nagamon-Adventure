@@ -10,6 +10,22 @@ export function initScreens() {
     adventureScreen = document.getElementById('adventure-screen');
 }
 
+function adjustAdventureScreenHeight() {
+    const skillsPanel = document.querySelector('.skills-panel');
+    const adventureScreen = document.getElementById('adventure-screen');
+
+    if (skillsPanel && adventureScreen) {
+        const skillsPanelRect = skillsPanel.getBoundingClientRect();
+        const adventureScreenRect = adventureScreen.getBoundingClientRect();
+        
+        const availableHeight = skillsPanelRect.bottom - adventureScreenRect.top;
+
+        if (availableHeight > 0) {
+            adventureScreen.style.height = `${availableHeight}px`;
+        }
+    }
+}
+
 export function showRegisterScreen() {
     if (registerScreen) registerScreen.classList.remove('hidden');
     if (homeScreen) homeScreen.classList.add('hidden');
@@ -18,8 +34,6 @@ export function showRegisterScreen() {
 }
 
 export function showHomeScreen() {
-    if (homeScreen) homeScreen.classList.remove('hidden');
-    if (registerScreen) registerScreen.classList.add('hidden');
     if (adventureScreen) adventureScreen.classList.add('hidden');
     loadAndDisplayCharacterData();
     startHpRecovery(); // HP回復を開始
@@ -27,8 +41,7 @@ export function showHomeScreen() {
 
 export function showAdventureScreen() {
     if (adventureScreen) adventureScreen.classList.remove('hidden');
-    if (registerScreen) registerScreen.classList.add('hidden');
-    if (homeScreen) homeScreen.classList.add('hidden');
     stopHpRecovery(); // HP回復を停止
-    // showScene('start'); // Will be called from adventure.js
+    // Adjust height when the screen is shown
+    adjustAdventureScreenHeight();
 }

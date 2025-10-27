@@ -1,5 +1,8 @@
 import { showHomeScreen, showAdventureScreen } from './screens.js';
 
+// --- Module-level variables ---
+let currentDungeonId = null;
+
 // --- DOM Elements ---
 
 
@@ -60,15 +63,17 @@ function renderBattleResults(data) {
         // プレイヤーの状態
         const playerWrapperDiv = document.createElement('div');
         playerWrapperDiv.classList.add('player-state-wrapper');
-        const playerStateDiv = document.createElement('div');
-        playerStateDiv.classList.add('combatant-info');
-        playerStateDiv.innerHTML = `
-            <img src="/static/images/${data.player.image_url}" alt="プレイヤー" class="combatant-image">
-            <div class="combatant-stats">
-                ${createHpBarHtml({ hp: logEntry.player_hp, max_hp: logEntry.player_max_hp, name: "プレイヤー" }, true)}
-            </div>
-        `;
-        playerWrapperDiv.appendChild(playerStateDiv);
+        for (let i = 0; i < 3; i++) {
+            const playerStateDiv = document.createElement('div');
+            playerStateDiv.classList.add('combatant-info');
+            playerStateDiv.innerHTML = `
+                <img src="/static/images/${data.player.image_url}" alt="プレイヤー" class="combatant-image">
+                <div class="combatant-stats">
+                    ${createHpBarHtml({ hp: logEntry.player_hp, max_hp: logEntry.player_max_hp, name: "プレイヤー" }, true)}
+                </div>
+            `;
+            playerWrapperDiv.appendChild(playerStateDiv);
+        }
         combatantsStateDiv.appendChild(playerWrapperDiv);
 
         // 敵の状態
@@ -77,17 +82,19 @@ function renderBattleResults(data) {
         logEntry.enemies_state.forEach(enemy => {
             const enemyInfoDiv = document.createElement('div');
             enemyInfoDiv.classList.add('combatant-info');
-            if (enemy.is_alive) {
-                const enemyMasterData = data.enemies.find(e => e.name === enemy.name);
-                const enemyImageFilename = enemyMasterData ? enemyMasterData.image_url : 'default_enemy.png';
-                enemyInfoDiv.innerHTML = `
-                    <img src="/static/images/${enemyImageFilename}" alt="${enemy.name}" class="combatant-image">
-                    <div class="combatant-stats">
-                        ${createHpBarHtml(enemy)}
-                    </div>
-                `;
-            } else {
-                enemyInfoDiv.innerHTML += `<p class="defeated-enemy">${enemy.name} (倒された)</p>`;
+            const enemyMasterData = data.enemies.find(e => e.name === enemy.name);
+            const enemyImageFilename = enemyMasterData ? enemyMasterData.image_url : 'default_enemy.png';
+            enemyInfoDiv.innerHTML = `
+                <img src="/static/images/${enemyImageFilename}" alt="${enemy.name}" class="combatant-image ${!enemy.is_alive ? 'defeated' : ''}">
+                <div class="combatant-stats">
+                    ${createHpBarHtml(enemy)}
+                </div>
+            `;
+            if (!enemy.is_alive) {
+                const defeatedText = document.createElement('p');
+                defeatedText.classList.add('defeated-enemy');
+                defeatedText.textContent = '(倒された)';
+                enemyInfoDiv.appendChild(defeatedText);
             }
             enemiesWrapperDiv.appendChild(enemyInfoDiv);
         });
@@ -117,8 +124,12 @@ function renderBattleResults(data) {
     // 3. Add event listeners to new buttons
     document.getElementById('back-to-home-btn').addEventListener('click', showHomeScreen);
     document.getElementById('go-deeper-btn').addEventListener('click', () => {
-        // For now, just re-run the same battle
-        startBattle(dungeonSelect.value);
+        if (currentDungeonId) {
+            startBattle(currentDungeonId);
+        } else {
+            console.error("現在のダンジョンIDが不明です。ホーム画面に戻ります。");
+            showHomeScreen();
+        }
     });
 }
 
@@ -131,6 +142,7 @@ async function startBattle(dungeonId) {
         alert('ダンジョンを選択してください。');
         return;
     }
+    currentDungeonId = dungeonId; // Save the current dungeon ID
 
     console.log(`${dungeonId} の冒険を開始します...`);
     showAdventureScreen();

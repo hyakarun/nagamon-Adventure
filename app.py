@@ -146,12 +146,12 @@ def index():
             character = Character(
                 user_id=user.id, 
                 image_url="Farah.png",
-                strength=10,
-                vitality=10,
-                intelligence=10,
-                agility=10,
-                luck=5,
-                charisma=5,
+                strength=1000,
+                vitality=1000,
+                intelligence=1000,
+                agility=1000,
+                luck=1000,
+                charisma=1000,
                 level=1
             ) # ステータスの初期値を設定
             db.session.add(character)
@@ -488,6 +488,12 @@ def start_battle(dungeon_id_str):
     }
 
     return jsonify(response_data)
+
+@app.route('/api/dungeons')
+def get_dungeons():
+    dungeons = Dungeon.query.all()
+    dungeon_list = [{'id': f'dungeon{d.id}', 'name': d.name} for d in dungeons]
+    return jsonify(dungeon_list)
 
 
 @app.route('/api/character/recover_hp', methods=['POST'])
