@@ -198,40 +198,59 @@ def create_tables():
 
 @app.route('/')
 def index():
-    print(f"DEBUG: Accessing / route. app.debug is {app.debug}")
-    if app.debug:
-        # デバッグモードならテストユーザーでログイン
-        test_uid = 'test_user'
-        user = User.query.filter_by(firebase_uid=test_uid).first()
+    return render_template('index.html')
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    id_token = data.get('idToken')
+    username = data.get('username') # 新規登録時に送られてくる
+
+    try:
+        decoded_token = auth.verify_id_token(id_token)
+        firebase_uid = decoded_token['uid']
+
+        user = User.query.filter_by(firebase_uid=firebase_uid).first()
+
         if not user:
-            user = User(firebase_uid=test_uid, username='テストユーザー')
+            # ユーザーが存在しない場合は新規作成
+            if not username:
+                # Googleログインなどでusernameがない場合は、Firebaseの表示名を使う
+                username = decoded_token.get('name', '名無しの冒険者')
+
+            user = User(firebase_uid=firebase_uid, username=username)
             db.session.add(user)
-            db.session.flush() # IDを確定
-            
-            character = Character(
-                user_id=user.id, 
-                image_url="Farah.png",
-                strength=1000,
-                vitality=1000,
-                intelligence=1000,
-                agility=1000,
-                luck=1000,
-                charisma=1000,
-                level=1
-            ) # ステータスの初期値を設定
+            db.session.flush()  # user.id を確定させる
+
+            # 新しいキャラクターを作成
+            character = Character(user_id=user.id)
             db.session.add(character)
             db.session.commit()
-        
-        login_user(user)
-        print(f"DEBUG: Test user logged in: {current_user.is_authenticated}")
+            print(f"New user and character created for {username} (UID: {firebase_uid})")
 
-    return render_template('index.html')
+        login_user(user)
+        return jsonify({'success': True, 'username': user.username})
+
+    except auth.InvalidIdTokenError:
+        return jsonify({'success': False, 'message': 'Invalid ID token'}), 401
+    except Exception as e:
+        print(f"Login error: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred during login'}), 500
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
 
 # ... (中略) ...
 
 @app.route('/api/character')
 @login_required
 def get_character_data():
+    print(f"DEBUG: current_user: {current_user}")
+    print(f"DEBUG: current_user.character: {current_user.character}")
     character = current_user.character
     
     # ログインしているのにキャラクターが存在しない場合 (通常は起こらないはず)

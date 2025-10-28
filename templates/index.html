@@ -8,7 +8,7 @@
 </head>
 <body>
 
-    <div id="main-container" class="screen">
+    <div id="main-container" class="screen hidden">
         <div id="left-panel">
             <h1>冒険者の家</h1>
             <div class="character-panel">
@@ -104,5 +104,23 @@
     <script type="module" src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
     <script type="module" src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
     <script type="module" src="{{ url_for('static', filename='firebase-init.js') }}"></script>
+
+    <div id="login-screen" class="screen">
+        <h2>ログイン</h2>
+        <input type="email" id="login-email" placeholder="メールアドレス"><br>
+        <input type="password" id="login-password" placeholder="パスワード"><br>
+        <button id="login-button">ログイン</button>
+        <button id="google-login-button">Googleでログイン</button>
+        <p>アカウントをお持ちでないですか？ <a href="#" id="show-register-link">登録</a></p>
+    </div>
+
+    <div id="register-screen" class="screen hidden">
+        <h2>登録</h2>
+        <input type="text" id="register-username" placeholder="ユーザー名"><br>
+        <input type="email" id="register-email" placeholder="メールアドレス"><br>
+        <input type="password" id="register-password" placeholder="パスワード"><br>
+        <button id="register-button">登録</button>
+        <p>すでにアカウントをお持ちですか？ <a href="#" id="show-login-link">ログイン</a></p>
+    </div>
 </body>
 </html>

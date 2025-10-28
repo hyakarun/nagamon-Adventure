@@ -1,27 +1,25 @@
-import { showHomeScreen, initScreens, showAdventureScreen } from './screens.js';
-import { initAdventureScreen } from './adventure.js';
+import { auth } from './firebase-init.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+import { initScreens, showHomeScreen, showLoginScreen } from './screens.js';
 import { loadAndDisplayCharacterData, initHomeScreen } from './home.js';
+import { initAdventureScreen } from './adventure.js';
 
-// 常にホーム画面を表示する
-function showGameScreen() {
-    console.log('登録画面をスキップし、直接ホーム画面を表示します。');
-    showHomeScreen();
-    initAdventureScreen();
-    loadAndDisplayCharacterData();
-    initHomeScreen(); // 追加
-}
-
-// DOMが完全にロードされたらゲーム画面を表示
+// --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
     initScreens();
-    showGameScreen();
+    initHomeScreen();
+    initAdventureScreen();
 
-    // Adjust height on window resize
-    window.addEventListener('resize', () => {
-        // Only adjust if the adventure screen is visible
-        const adventureScreen = document.getElementById('adventure-screen');
-        if (adventureScreen && !adventureScreen.classList.contains('hidden')) {
-            showAdventureScreen(); // This will call adjustAdventureScreenHeight
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            // User is signed in.
+            console.log("User is signed in:", user.uid);
+            showHomeScreen();
+            await loadAndDisplayCharacterData();
+        } else {
+            // User is signed out.
+            console.log("User is signed out.");
+            showLoginScreen();
         }
     });
 });

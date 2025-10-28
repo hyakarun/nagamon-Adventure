@@ -1,46 +1,38 @@
-import { loadAndDisplayCharacterData, startHpRecovery, stopHpRecovery } from './home.js';
-
-let registerScreen;
-let homeScreen;
+let mainContainer;
 let adventureScreen;
+let loginScreen;
+let registerScreen;
 
 export function initScreens() {
-    registerScreen = document.getElementById('register-screen');
-    homeScreen = document.getElementById('home-screen');
+    mainContainer = document.getElementById('main-container');
     adventureScreen = document.getElementById('adventure-screen');
+    loginScreen = document.getElementById('login-screen');
+    registerScreen = document.getElementById('register-screen');
 }
 
-function adjustAdventureScreenHeight() {
-    const skillsPanel = document.querySelector('.skills-panel');
-    const adventureScreen = document.getElementById('adventure-screen');
-
-    if (skillsPanel && adventureScreen) {
-        const skillsPanelRect = skillsPanel.getBoundingClientRect();
-        const adventureScreenRect = adventureScreen.getBoundingClientRect();
-        
-        const availableHeight = skillsPanelRect.bottom - adventureScreenRect.top;
-
-        if (availableHeight > 0) {
-            adventureScreen.style.height = `${availableHeight}px`;
-        }
-    }
-}
-
-export function showRegisterScreen() {
-    if (registerScreen) registerScreen.classList.remove('hidden');
-    if (homeScreen) homeScreen.classList.add('hidden');
+function hideAllScreens() {
+    if (mainContainer) mainContainer.classList.add('hidden');
     if (adventureScreen) adventureScreen.classList.add('hidden');
-    stopHpRecovery(); // HP回復を停止
+    if (loginScreen) loginScreen.classList.add('hidden');
+    if (registerScreen) registerScreen.classList.add('hidden');
 }
 
 export function showHomeScreen() {
-    if (adventureScreen) adventureScreen.classList.add('hidden');
-    startHpRecovery(); // HP回復を開始
+    hideAllScreens();
+    if (mainContainer) mainContainer.classList.remove('hidden');
 }
 
 export function showAdventureScreen() {
+    hideAllScreens();
     if (adventureScreen) adventureScreen.classList.remove('hidden');
-    stopHpRecovery(); // HP回復を停止
-    // Adjust height when the screen is shown
-    adjustAdventureScreenHeight();
+}
+
+export function showLoginScreen() {
+    hideAllScreens();
+    if (loginScreen) loginScreen.classList.remove('hidden');
+}
+
+export function showRegisterScreen() {
+    hideAllScreens();
+    if (registerScreen) registerScreen.classList.remove('hidden');
 }

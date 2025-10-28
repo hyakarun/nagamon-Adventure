@@ -7,9 +7,27 @@ body {
     color: #e0e0e0;
     font-family: 'Helvetica Neue', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
     margin: 0;
+    /* flexboxで中央揃え */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+#login-screen, #register-screen {
+    width: 400px;
+    padding: 2em;
+    background-color: #2a2a2a;
+    border-radius: 5px;
+    border: 1px solid #444;
+}
+
+#main-container.hidden {
+    display: none;
 }
 
 #main-container {
+    display: grid; /* 元のスタイルを維持 */
     display: grid;
     grid-template-columns: 1fr 1fr;
     height: 100vh;
@@ -164,7 +182,6 @@ p {
 .action-button:hover {
     background-color: #0056b3;
 }
-
 .actions-panel .action-item a {
     color: #00aaff;
     text-decoration: none;
