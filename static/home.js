@@ -14,6 +14,7 @@ export async function loadAndDisplayCharacterData() {
             } else {
                 console.error('キャラクターデータの取得に失敗しました。', response.statusText);
             }
+            loadAndDisplayDungeons();
             return;
         }
 
