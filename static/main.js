@@ -1,6 +1,6 @@
 import { showHomeScreen, initScreens, showAdventureScreen } from './screens.js';
 import { initAdventureScreen } from './adventure.js';
-import { loadAndDisplayCharacterData } from './home.js';
+import { loadAndDisplayCharacterData, initHomeScreen } from './home.js';
 
 // 常にホーム画面を表示する
 function showGameScreen() {
@@ -8,6 +8,7 @@ function showGameScreen() {
     showHomeScreen();
     initAdventureScreen();
     loadAndDisplayCharacterData();
+    initHomeScreen(); // 追加
 }
 
 // DOMが完全にロードされたらゲーム画面を表示

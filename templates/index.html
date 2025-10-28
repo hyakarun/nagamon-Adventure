@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>テキストアドベンチャー</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=12">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=27">
 </head>
 <body>
 
@@ -13,8 +13,8 @@
             <h1>冒険者の家</h1>
             <div class="character-panel">
                 <img id="character-image-1" src="" alt="キャラクター画像1" class="character-image">
-                <img id="character-image-2" src="" alt="キャラクター画像2" class="character-image">
-                <img id="character-image-3" src="" alt="キャラクター画像3" class="character-image">
+                <div class="character-slot"></div>
+                <div class="character-slot"></div>
             </div>
             <div class="middle-panel">
                 <div class="equipment-panel">
@@ -77,6 +77,9 @@
                 </div>
                 <div class="action-item">
                     <button class="action-button">プロフィール</button>
+                </div>
+                <div class="action-item">
+                    <button class="action-button" id="inn-button">宿屋</button>
                 </div>
                  <div class="action-item">
                     <a href="/logout">ログアウト</a>

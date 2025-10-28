@@ -1,3 +1,5 @@
+import { player } from './player.js';
+
 // APIからキャラクターデータを取得し、ホーム画面を更新する
 export async function loadAndDisplayCharacterData() {
     try {
@@ -16,6 +18,15 @@ export async function loadAndDisplayCharacterData() {
         }
 
         const data = await response.json();
+
+        // --- player.jsのplayerオブジェクトを更新 ---
+        player.name = data.username;
+        player.hp = data.hp;
+        player.mp = data.mp;
+        player.money = data.money;
+        player.attack = data.attack;
+        player.defense = data.defense;
+        player.agility = data.agility;
 
         // --- ステータスパネルの更新 ---
         document.getElementById('char-username').textContent = data.username;
@@ -38,8 +49,6 @@ export async function loadAndDisplayCharacterData() {
         // 画像は /static/images/ ディレクトリにあると仮定
         const imageUrl = `/static/images/${data.image_url}`;
         document.getElementById('character-image-1').src = imageUrl;
-        document.getElementById('character-image-2').src = imageUrl;
-        document.getElementById('character-image-3').src = imageUrl;
 
 
         // --- 装備パネルの更新 ---
@@ -156,5 +165,45 @@ export function stopHpRecovery() {
         clearInterval(hpRecoveryTimer);
         hpRecoveryTimer = null;
         console.log('HP回復を停止しました。');
+    }
+}
+
+export function initHomeScreen() {
+    const innButton = document.getElementById('inn-button');
+    if (innButton) {
+        innButton.addEventListener('click', async () => {
+            // 現在のキャラクターデータを取得して費用を計算
+            const response = await fetch('/api/character');
+            const charData = await response.json();
+            const cost = charData.level * 1000;
+
+            if (confirm(`${cost} ゴールド消費してHPとMPを全回復しますか？`)) {
+                try {
+                    const healResponse = await fetch('/api/inn/heal', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    if (!healResponse.ok) {
+                        const errorData = await healResponse.json();
+                        alert(`回復に失敗しました: ${errorData.message}`);
+                        return;
+                    }
+
+                    const result = await healResponse.json();
+                    if (result.success) {
+                        alert(`HPとMPが全回復しました！ ${cost} ゴールド消費しました。`);
+                        loadAndDisplayCharacterData(); // キャラクター情報を更新
+                    } else {
+                        alert(`回復できませんでした: ${result.message}`);
+                    }
+                } catch (error) {
+                    console.error('宿屋での回復処理中にエラーが発生しました:', error);
+                    alert('回復処理中にエラーが発生しました。');
+                }
+            }
+        });
     }
 }

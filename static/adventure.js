@@ -1,4 +1,5 @@
 import { showHomeScreen, showAdventureScreen } from './screens.js';
+import { loadAndDisplayCharacterData } from './home.js';
 
 // --- Module-level variables ---
 let currentDungeonId = null;
@@ -63,7 +64,8 @@ function renderBattleResults(data) {
         // プレイヤーの状態
         const playerWrapperDiv = document.createElement('div');
         playerWrapperDiv.classList.add('player-state-wrapper');
-        for (let i = 0; i < 3; i++) {
+        // 仲間は1人なので、1回だけ表示
+        for (let i = 0; i < 1; i++) {
             const playerStateDiv = document.createElement('div');
             playerStateDiv.classList.add('combatant-info');
             playerStateDiv.innerHTML = `
@@ -91,10 +93,7 @@ function renderBattleResults(data) {
                 </div>
             `;
             if (!enemy.is_alive) {
-                const defeatedText = document.createElement('p');
-                defeatedText.classList.add('defeated-enemy');
-                defeatedText.textContent = '(倒された)';
-                enemyInfoDiv.appendChild(defeatedText);
+                // 倒されたテキストは表示しない
             }
             enemiesWrapperDiv.appendChild(enemyInfoDiv);
         });
@@ -110,6 +109,15 @@ function renderBattleResults(data) {
     let resultHTML = `<h3>結果</h3>`;
     if (data.result.outcome === 'win') {
         resultHTML += `<p>勝利！ ${data.result.exp_gained} の経験値を獲得した。</p>`;
+        
+        if (data.result.leveled_up) {
+            resultHTML += `<p>レベルアップ！ レベルが ${data.player_new_level} になった！</p>`;
+            if (data.result.stat_increases) {
+                for (const stat in data.result.stat_increases) {
+                    resultHTML += `<p>${stat} が ${data.result.stat_increases[stat]} 上がった！</p>`;
+                }
+            }
+        }
         // TODO: Display items found
     } else {
         resultHTML += `<p>敗北...。</p>`;
@@ -121,8 +129,13 @@ function renderBattleResults(data) {
     `;
     resultArea.innerHTML = resultHTML;
 
+    // 戦闘結果表示後、ホーム画面のキャラクターデータを更新
+    loadAndDisplayCharacterData();
+
     // 3. Add event listeners to new buttons
-    document.getElementById('back-to-home-btn').addEventListener('click', showHomeScreen);
+    document.getElementById('back-to-home-btn').addEventListener('click', () => {
+        showHomeScreen();
+    });
     document.getElementById('go-deeper-btn').addEventListener('click', () => {
         if (currentDungeonId) {
             startBattle(currentDungeonId);

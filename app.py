@@ -11,6 +11,8 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = "supersecretkey"
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'users3.db')}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.exp_table = {} # 経験値テーブルを保持する辞書
+app.chara_pram_table = {} # キャラクターパラメータテーブルを保持する辞書 # 追加
 
 db = SQLAlchemy(app)
 
@@ -53,11 +55,15 @@ class Character(db.Model):
 
     # 現在HPはDBに保存
     _hp = db.Column("hp", db.Integer)
+    # 現在MPはDBに保存
+    _mp = db.Column("mp", db.Integer) # 追加
 
     def __init__(self, **kwargs):
         super(Character, self).__init__(**kwargs)
         if self._hp is None:
             self._hp = self.max_hp
+        if self._mp is None: # 追加
+            self._mp = self.max_mp # 追加
 
     # 派生ステータス (DBには保存されない)
     @property
@@ -82,6 +88,64 @@ class Character(db.Model):
     @hp.setter
     def hp(self, value):
         self._hp = max(0, min(value, self.max_hp))
+
+    @property
+    def max_mp(self): # 追加
+        # 仮の計算式: 最大MP = 賢さ * 3 + レベル * 3
+        return self.intelligence * 3 + self.level * 3
+
+    @property
+    def mp(self): # 追加
+        return self._mp
+
+    @mp.setter
+    def mp(self, value): # 追加
+        self._mp = max(0, min(value, self.max_mp))
+
+    def add_exp(self, exp_to_add):
+        self.current_exp += exp_to_add
+        leveled_up = False
+        stat_increases = {}
+        
+        if not app.exp_table or not app.chara_pram_table: # chara_pram_table もチェック
+            return False, {}
+
+        while self.level < max(app.exp_table.keys()) and self.current_exp >= app.exp_table.get(self.level + 1, {}).get('total_exp', float('inf')):
+            leveled_up = True
+            old_level = self.level
+            self.level += 1
+            
+            # chara_pram_table から新しいステータスを取得
+            new_stats = app.chara_pram_table.get(self.level)
+            if new_stats:
+                # 各ステータスの差分を計算し、stat_increases に格納
+                if 'hp' in new_stats:
+                    stat_increases['hp'] = new_stats['hp'] - self.max_hp # max_hp はプロパティなので直接変更できない
+                    # HPはmax_hpが上がった分だけ増やす
+                    self.hp += stat_increases['hp']
+                if 'str' in new_stats:
+                    stat_increases['strength'] = new_stats['str'] - self.strength
+                    self.strength = new_stats['str']
+                if 'vit' in new_stats:
+                    stat_increases['vitality'] = new_stats['vit'] - self.vitality
+                    self.vitality = new_stats['vit']
+                if 'int' in new_stats:
+                    stat_increases['intelligence'] = new_stats['int'] - self.intelligence
+                    self.intelligence = new_stats['int']
+                if 'agi' in new_stats:
+                    stat_increases['agility'] = new_stats['agi'] - self.agility
+                    self.agility = new_stats['agi']
+                if 'luk' in new_stats:
+                    stat_increases['luck'] = new_stats['luk'] - self.luck
+                    self.luck = new_stats['luk']
+                if 'vis' in new_stats: # charisma
+                    stat_increases['charisma'] = new_stats['vis'] - self.charisma
+                    self.charisma = new_stats['vis']
+            
+            # 次のレベルに必要な経験値を更新
+            self.required_exp = app.exp_table.get(self.level, {}).get('next_exp', self.required_exp) # 変更
+
+        return leveled_up, stat_increases
     
     # 装備
     equip_right_hand = db.Column(db.String(100), default="なし")
@@ -120,6 +184,7 @@ class Enemy(db.Model):
 class Dungeon(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
+    max_enemies = db.Column(db.Integer, default=3) # 追加
 
 class DungeonEnemy(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -175,6 +240,8 @@ def get_character_data():
         db.session.add(character)
         db.session.commit()
 
+    print(f"DEBUG: Character data before jsonify: {character.username}, Level: {character.level}, HP: {character.hp}/{character.max_hp}, MP: {character.mp}/{character.max_mp}, Image: {character.image_url}") # 追加
+
     character_data = {
         'username': current_user.username,
         'money': character.money,
@@ -185,6 +252,8 @@ def get_character_data():
         'defense': character.defense,
         'hp': character.hp,
         'max_hp': character.max_hp,
+        'mp': character.mp, # 追加
+        'max_mp': character.max_mp, # 追加
         'strength': character.strength,
         'vitality': character.vitality,
         'intelligence': character.intelligence,
@@ -360,7 +429,9 @@ def run_battle(player_char, enemies):
             'player_is_alive': player_char.is_alive,
             'enemies_state': [{'name': e.name, 'hp': e.hp, 'max_hp': e.max_hp, 'is_alive': e.is_alive} for e in enemies]
         })
-        player_char.current_exp += exp_total
+        leveled_up, stat_increases = player_char.add_exp(exp_total)
+        result['leveled_up'] = leveled_up
+        result['stat_increases'] = stat_increases
 
     else:
         result['outcome'] = 'lose'
@@ -404,18 +475,13 @@ def start_battle(dungeon_id_str):
     player_char.is_alive = True
 
     # ダンジョンID(文字列)に基づいてダンジョンを決定
-    dungeon_name = None
-    if dungeon_id_str == 'dungeon1':
-        dungeon_name = '始まるの森'
-    # elif dungeon_id_str == 'dungeon2':
-    #     dungeon_name = 'ゴブリンの洞窟' # マスターデータに存在しない
+    dungeon_id = int(dungeon_id_str.replace('dungeon', '')) # 変更
+    dungeon = Dungeon.query.get(dungeon_id) # 変更
     
-    if not dungeon_name:
+    if not dungeon:
         return jsonify({'error': '無効なダンジョンです'}), 404
 
-    dungeon = Dungeon.query.filter_by(name=dungeon_name).first()
-    if not dungeon:
-        return jsonify({'error': 'ダンジョンが見つかりませんでした'}), 404
+    print(f"DEBUG: Dungeon found: {dungeon.name}, max_enemies: {dungeon.max_enemies}") # 追加
 
     # ダンジョンに出現する敵を取得
     dungeon_enemies = DungeonEnemy.query.filter_by(dungeon_id=dungeon.id).all()
@@ -440,12 +506,20 @@ def start_battle(dungeon_id_str):
     enemy_candidates = [de.enemy_id for de in available_enemies]
     spawn_rates = [de.spawn_rate for de in available_enemies]
     
-    num_enemies = 3 # 仮に3体出現
-    # 候補が3体より少ない場合は、いるだけ出現させる
+    num_enemies = dungeon.max_enemies
+    # 候補が num_enemies より少ない場合は、いるだけ出現させる
     if len(enemy_candidates) < num_enemies:
         num_enemies = len(enemy_candidates)
 
-    selected_enemy_ids = random.choices(enemy_candidates, weights=spawn_rates, k=num_enemies)
+    print(f"DEBUG: Selecting {num_enemies} enemies from {len(enemy_candidates)} candidates.") # 追加
+    print(f"DEBUG: Enemy candidates: {enemy_candidates}, Spawn rates: {spawn_rates}") # 追加
+
+    # random.choices の weights がすべて0の場合にエラーになる可能性があるのでチェック
+    if sum(spawn_rates) == 0:
+        # すべての spawn_rate が0の場合は均等に抽選
+        selected_enemy_ids = random.choices(enemy_candidates, k=num_enemies)
+    else:
+        selected_enemy_ids = random.choices(enemy_candidates, weights=spawn_rates, k=num_enemies)
 
     enemies = []
     for enemy_id in selected_enemy_ids:
@@ -462,8 +536,8 @@ def start_battle(dungeon_id_str):
     # 結果をDBに反映
     if current_user.is_authenticated: # ログインしている場合のみDBに反映
         if result['outcome'] == 'win':
-            player_char.current_exp += result['exp_gained']
-            # TODO: レベルアップ判定と処理
+            # レベルアップ処理は run_battle の中で行われる
+            pass
         
         # 勝敗に関わらずセッションをコミット（敗北時の所持金減少などを反映）
         db.session.commit()
@@ -484,7 +558,22 @@ def start_battle(dungeon_id_str):
         'detailed_log': detailed_log,
         'result': result,
         'player': player_initial_stats,
-        'enemies': enemies_initial_stats
+        'enemies': enemies_initial_stats,
+        'player_new_level': player_char.level,
+        'player_new_current_exp': player_char.current_exp,
+        'player_new_required_exp': app.exp_table.get(player_char.level + 1, {}).get('total_exp', player_char.required_exp),
+        'player_new_strength': player_char.strength,
+        'player_new_vitality': player_char.vitality,
+        'player_new_intelligence': player_char.intelligence,
+        'player_new_agility': player_char.agility,
+        'player_new_luck': player_char.luck,
+        'player_new_charisma': player_char.charisma,
+        'player_new_attack': player_char.attack,
+        'player_new_defense': player_char.defense,
+        'player_new_max_hp': player_char.max_hp,
+        'player_new_hp': player_char.hp,
+        'player_new_mp': player_char.mp, # 追加
+        'player_new_max_mp': player_char.max_mp, # 追加
     }
 
     return jsonify(response_data)
@@ -558,35 +647,33 @@ def setup_database(app):
 
             dungeon_csv_path = os.path.join(os.path.dirname(__file__), 'masterdata', 'dungeons.csv')
             with open(dungeon_csv_path, newline='', encoding='utf-8') as csvfile:
-                reader = csv.reader(csvfile)
-                header = next(reader) # ヘッダー行をスキップ
+                reader = csv.DictReader(csvfile) # 変更
 
-                col_map = {col_name: i for i, col_name in enumerate(header)}
+                # col_map の作成は不要になります
 
                 dungeons = {} # dungeon_name をキーにして Dungeon オブジェクトをキャッシュ
                 for row in reader:
                     if not row:
                         continue
                     
-                    dungeon_name = row[col_map['dungeon_name']]
-                    enemy_id = int(row[col_map['enemy_id']])
-                    spawn_rate = int(row[col_map['spawn_rate']])
+                    # CSVの列からデータを取得
+                    csv_dungeon_name = row['dungeon_name'] # 変更
+                    csv_enemy_id = int(row['enemy_id']) # 変更
+                    csv_spawn_rate = int(row['spawn_rate']) # 変更
+                    csv_max_enemies = int(row['max_enemies']) # 変更
 
                     # Dungeon オブジェクトを取得または作成
-                    if dungeon_name in dungeons:
-                        dungeon = dungeons[dungeon_name]
-                    else:
-                        dungeon = Dungeon.query.filter_by(name=dungeon_name).first()
-                        if not dungeon:
-                            dungeon = Dungeon(name=dungeon_name)
-                            db.session.add(dungeon)
-                            db.session.flush() # id を確定させる
-                        dungeons[dungeon_name] = dungeon
-
+                    dungeon = Dungeon.query.filter_by(name=csv_dungeon_name).first()
+                    if not dungeon:
+                        dungeon = Dungeon(name=csv_dungeon_name, max_enemies=csv_max_enemies)
+                        db.session.add(dungeon)
+                        db.session.flush() # id を確定させる
+                    
+                    # DungeonEnemy を作成
                     dungeon_enemy = DungeonEnemy(
-                        dungeon_id=dungeon.id,
-                        enemy_id=enemy_id,
-                        spawn_rate=spawn_rate
+                        dungeon_id=dungeon.id, # Dungeon オブジェクトの id を使用
+                        enemy_id=csv_enemy_id,
+                        spawn_rate=csv_spawn_rate
                     )
                     db.session.add(dungeon_enemy)
             
@@ -598,6 +685,48 @@ def setup_database(app):
         except Exception as e:
             print(f"Error loading dungeon data: {e}")
             db.session.rollback()
+
+        # CSVから経験値テーブルを読み込み
+        try:
+            exp_csv_path = os.path.join(os.path.dirname(__file__), 'masterdata', 'exp_table.csv')
+            with open(exp_csv_path, newline='', encoding='utf-8') as csvfile:
+                reader = csv.DictReader(csvfile)
+                # レベルをキーにした辞書の辞書を作成
+                app.exp_table = {int(row['lv']): {
+                    'total_exp': int(row['total_exp']),
+                    'next_exp': int(row['next_exp']),
+                    '上昇量': int(row['上昇量'])
+                } for row in reader}
+            
+            print("Loaded experience table from CSV.")
+
+        except FileNotFoundError:
+            print("Experience table CSV file not found. Skipping data loading.")
+        except Exception as e:
+            print(f"Error loading experience table data: {e}")
+
+        # CSVからキャラクターパラメータテーブルを読み込み
+        try:
+            chara_pram_csv_path = os.path.join(os.path.dirname(__file__), 'masterdata', 'chara_pram.csv')
+            with open(chara_pram_csv_path, newline='', encoding='utf-8') as csvfile:
+                reader = csv.DictReader(csvfile)
+                # レベルをキーにした辞書の辞書を作成
+                app.chara_pram_table = {int(row['lv']): {
+                    'hp': int(row['hp']),
+                    'str': int(row['str']),
+                    'vit': int(row['vit']),
+                    'int': int(row['int']),
+                    'agi': int(row['agi']),
+                    'luk': int(row['luk']),
+                    'vis': int(row['vis']) # charisma
+                } for row in reader}
+            
+            print("Loaded character parameter table from CSV.")
+
+        except FileNotFoundError:
+            print("Character parameter table CSV file not found. Skipping data loading.")
+        except Exception as e:
+            print(f"Error loading character parameter table data: {e}")
 
 if __name__ == '__main__':
     setup_database(app)

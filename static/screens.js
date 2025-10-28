@@ -35,7 +35,6 @@ export function showRegisterScreen() {
 
 export function showHomeScreen() {
     if (adventureScreen) adventureScreen.classList.add('hidden');
-    loadAndDisplayCharacterData();
     startHpRecovery(); // HP回復を開始
 }
 
