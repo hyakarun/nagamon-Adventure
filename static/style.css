@@ -1,39 +1,41 @@
-* {
-    box-sizing: border-box;
-}
-
+/* bodyのスタイルを元に戻す */
 body {
     background-color: #555;
     color: #e0e0e0;
     font-family: 'Helvetica Neue', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
     margin: 0;
-    /* flexboxで中央揃え */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
 }
 
-#login-screen, #register-screen {
-    width: 400px;
-    padding: 2em;
+/* .screenクラスの複雑なスタイルを削除 */
+.screen {
+    width: 100%;
     background-color: #2a2a2a;
     border-radius: 5px;
+}
+
+/* hiddenクラスはそのまま */
+.hidden {
+    display: none !important;
+}
+
+/* ログイン・登録フォームを画面中央に配置するためのスタイル */
+#login-screen, #register-screen {
+    width: 400px;
+    margin: 10em auto; /* 上下にマージン、左右は自動で中央揃え */
+    padding: 2em;
     border: 1px solid #444;
 }
 
-#main-container.hidden {
-    display: none;
-}
-
+/* ホーム画面のスタイルはそのまま */
 #main-container {
-    display: grid; /* 元のスタイルを維持 */
     display: grid;
     grid-template-columns: 1fr 1fr;
     height: 100vh;
     padding: 15px;
     gap: 15px;
 }
+
+/* 元のスタイルから必要なものを残す */
 
 #left-panel {
     padding: 2em;
@@ -50,16 +52,6 @@ body {
     flex-direction: column;
     gap: 15px;
     height: 100%;
-}
-
-.screen {
-    width: 100%;
-    background-color: #2a2a2a;
-    border-radius: 5px;
-}
-
-.hidden {
-    display: none;
 }
 
 #left-panel h1 {
@@ -86,7 +78,7 @@ body {
 .character-slot {
     width: 300px;
     height: 300px;
-    border: 1px dashed #666; /* 破線で枠を表現 */
+    border: 1px dashed #666;
     border-radius: 5px;
     background-color: #333;
     display: flex;
@@ -182,6 +174,7 @@ p {
 .action-button:hover {
     background-color: #0056b3;
 }
+
 .actions-panel .action-item a {
     color: #00aaff;
     text-decoration: none;
@@ -307,8 +300,6 @@ p {
     font-size: 0.8em;
     white-space: nowrap;
 }
-
-/* .defeated-enemy のスタイルは不要になったため削除 */
 
 #battle-result-area {
     text-align: center;

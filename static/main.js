@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // User is signed in.
             console.log("User is signed in:", user.uid);
             showHomeScreen();
-            await loadAndDisplayCharacterData();
         } else {
             // User is signed out.
             console.log("User is signed out.");

@@ -19,7 +19,17 @@ db = SQLAlchemy(app)
 # Firebase Admin SDK initialization
 # サービスアカウントキーファイル名を指定
 cred = credentials.Certificate(os.path.join(os.path.dirname(__file__), "serviceAccountKey.json"))
-firebase_admin.initialize_app(cred)
+# --- ここから追加 ---
+print(f"--- Credentials object created: {cred} ---")
+
+# --- ここから追加 ---
+print("Attempting to initialize Firebase Admin SDK...")
+# --- ここまで追加 ---
+if not firebase_admin._apps:
+    firebase_admin.initialize_app(cred)
+# --- ここから追加 ---
+print("Firebase Admin SDK initialized successfully.")
+# --- ここまで追加 ---
 
 # Flask-Login setup
 login_manager = LoginManager()
@@ -78,7 +88,11 @@ class Character(db.Model):
 
     @property
     def max_hp(self):
-        # 仮の計算式: 最大HP = 体力 * 5 + レベル * 5
+        # chara_pram_tableから現在のレベルに対応するHPを取得
+        stats = app.chara_pram_table.get(self.level)
+        if stats and 'hp' in stats:
+            return stats['hp']
+        # フォールバック
         return self.vitality * 5 + self.level * 5
     
     @property
@@ -223,18 +237,42 @@ def login():
             db.session.flush()  # user.id を確定させる
 
             # 新しいキャラクターを作成
-            character = Character(user_id=user.id)
+            # chara_pram_tableからLv1のステータスを取得
+            lv1_stats = app.chara_pram_table.get(1, {})
+            if not lv1_stats:
+                # 万が一テーブルが読み込めていない場合のフォールバック
+                lv1_stats = {'str': 10, 'vit': 10, 'int': 10, 'agi': 10, 'luk': 10, 'vis': 10}
+
+            character = Character(
+                user_id=user.id,
+                image_url="baby.png", # 画像を固定
+                strength=lv1_stats.get('str', 10),
+                vitality=lv1_stats.get('vit', 10),
+                intelligence=lv1_stats.get('int', 10),
+                agility=lv1_stats.get('agi', 10),
+                luck=lv1_stats.get('luk', 10),
+                charisma=lv1_stats.get('vis', 10)
+            )
+            # HPの初期値を設定
+            character.hp = character.max_hp
+
             db.session.add(character)
             db.session.commit()
             print(f"New user and character created for {username} (UID: {firebase_uid})")
 
         login_user(user)
+        print(f"--- User logged in (in /login) ---")
+        print(f"current_user.is_authenticated: {current_user.is_authenticated}")
+        print(f"------------------------------------")
         return jsonify({'success': True, 'username': user.username})
 
     except auth.InvalidIdTokenError:
+        print(f"Firebase Invalid ID Token Error: {id_token}") # 追加
         return jsonify({'success': False, 'message': 'Invalid ID token'}), 401
     except Exception as e:
         print(f"Login error: {e}")
+        import traceback # 追加
+        traceback.print_exc() # 追加
         return jsonify({'success': False, 'message': 'An error occurred during login'}), 500
 
 @app.route('/logout')
@@ -243,12 +281,21 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
+@app.route('/api/users')
+def get_users():
+    users = User.query.all()
+    user_list = [{'id': user.id, 'username': user.username} for user in users]
+    return jsonify(user_list)
+
 
 # ... (中略) ...
 
 @app.route('/api/character')
 @login_required
 def get_character_data():
+    print(f"--- User status (in /api/character) ---")
+    print(f"current_user.is_authenticated: {current_user.is_authenticated}")
+    print(f"-----------------------------------------")
     print(f"DEBUG: current_user: {current_user}")
     print(f"DEBUG: current_user.character: {current_user.character}")
     character = current_user.character
@@ -620,9 +667,11 @@ def recover_hp():
 def setup_database(app):
     with app.app_context():
         db.create_all()
+        print("Database tables created.") # 追加
 
         # CSVから敵データを読み込み
         try:
+            print("Loading enemy data...") # 追加
             # 既存の敵データをすべて削除
             Enemy.query.delete()
             
@@ -746,6 +795,14 @@ def setup_database(app):
             print("Character parameter table CSV file not found. Skipping data loading.")
         except Exception as e:
             print(f"Error loading character parameter table data: {e}")
+
+    # --- ここから追加 ---
+    print("--- Initial Master Data ---")
+    print("EXP Table Loaded:", bool(app.exp_table))
+    print("Chara Pram Table Loaded:", bool(app.chara_pram_table))
+    if app.chara_pram_table:
+        print("Lv1 Chara Pram:", app.chara_pram_table.get(1))
+    print("--------------------------")
 
 if __name__ == '__main__':
     setup_database(app)

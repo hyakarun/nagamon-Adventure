@@ -19,6 +19,7 @@ function hideAllScreens() {
 
 export function showHomeScreen() {
     hideAllScreens();
+    document.body.classList.add('game-view');
     if (mainContainer) mainContainer.classList.remove('hidden');
 }
 
@@ -29,10 +30,12 @@ export function showAdventureScreen() {
 
 export function showLoginScreen() {
     hideAllScreens();
+    document.body.classList.remove('game-view');
     if (loginScreen) loginScreen.classList.remove('hidden');
 }
 
 export function showRegisterScreen() {
     hideAllScreens();
+    document.body.classList.remove('game-view');
     if (registerScreen) registerScreen.classList.remove('hidden');
 }

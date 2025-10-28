@@ -1,7 +1,17 @@
+--- Credentials object created: <firebase_admin.credentials.Certificate object at 0x0000027D9BC412B0> ---
+Attempting to initialize Firebase Admin SDK...
+Firebase Admin SDK initialized successfully.
+Database tables created.
+Loading enemy data...
 Loaded enemy data from CSV.
 Loaded dungeon data from CSV.
 Loaded experience table from CSV.
 Loaded character parameter table from CSV.
+--- Initial Master Data ---
+EXP Table Loaded: True
+Chara Pram Table Loaded: True
+Lv1 Chara Pram: {'hp': 500, 'str': 10, 'vit': 10, 'int': 10, 'agi': 10, 'luk': 10, 'vis': 10}
+--------------------------
  * Serving Flask app 'app'
  * Debug mode: on
 WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
@@ -10,4 +20,5 @@ Press CTRL+C to quit
  * Restarting with stat
  * Debugger is active!
  * Debugger PIN: 142-329-085
-^C
+127.0.0.1 - - [29/Oct/2025 01:05:56] "GET /api/character HTTP/1.1" 401 -
+127.0.0.1 - - [29/Oct/2025 01:05:57] "POST /login HTTP/1.1" 401 -

@@ -169,6 +169,7 @@ export function stopHpRecovery() {
 }
 
 export function initHomeScreen() {
+    loadAndDisplayCharacterData();
     const innButton = document.getElementById('inn-button');
     if (innButton) {
         innButton.addEventListener('click', async () => {
