@@ -1,41 +1,35 @@
-let mainContainer;
-let adventureScreen;
-let loginScreen;
-let registerScreen;
-
 export function initScreens() {
-    mainContainer = document.getElementById('main-container');
-    adventureScreen = document.getElementById('adventure-screen');
-    loginScreen = document.getElementById('login-screen');
-    registerScreen = document.getElementById('register-screen');
+    const screens = document.querySelectorAll('.screen');
+    screens.forEach(screen => {
+        screen.classList.add('hidden');
+    });
 }
 
-function hideAllScreens() {
-    if (mainContainer) mainContainer.classList.add('hidden');
-    if (adventureScreen) adventureScreen.classList.add('hidden');
-    if (loginScreen) loginScreen.classList.add('hidden');
-    if (registerScreen) registerScreen.classList.add('hidden');
-}
-
-export function showHomeScreen() {
-    hideAllScreens();
-    document.body.classList.add('game-view');
-    if (mainContainer) mainContainer.classList.remove('hidden');
-}
-
-export function showAdventureScreen() {
-    hideAllScreens();
-    if (adventureScreen) adventureScreen.classList.remove('hidden');
+export function showScreen(screenId) {
+    console.log(`Attempting to show screen: ${screenId}`);
+    const screens = document.querySelectorAll('.screen');
+    screens.forEach(screen => {
+        console.log(`Hiding screen: ${screen.id}`);
+        screen.classList.add('hidden');
+    });
+    const targetScreen = document.getElementById(screenId);
+    if (targetScreen) {
+        console.log(`Target screen ${screenId} found. Current classList: ${targetScreen.classList}`);
+        targetScreen.classList.remove('hidden');
+        console.log(`Target screen ${screenId} classList after removing hidden: ${targetScreen.classList}`);
+    } else {
+        console.error(`Target screen ${screenId} not found.`);
+    }
 }
 
 export function showLoginScreen() {
-    hideAllScreens();
-    document.body.classList.remove('game-view');
-    if (loginScreen) loginScreen.classList.remove('hidden');
+    showScreen('login-screen');
 }
 
 export function showRegisterScreen() {
-    hideAllScreens();
-    document.body.classList.remove('game-view');
-    if (registerScreen) registerScreen.classList.remove('hidden');
+    showScreen('register-screen');
+}
+
+export function showHomeScreen() {
+    showScreen('main-container');
 }

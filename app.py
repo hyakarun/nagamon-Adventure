@@ -66,14 +66,7 @@ class Character(db.Model):
     # 現在HPはDBに保存
     _hp = db.Column("hp", db.Integer)
     # 現在MPはDBに保存
-    _mp = db.Column("mp", db.Integer) # 追加
-
-    def __init__(self, **kwargs):
-        super(Character, self).__init__(**kwargs)
-        if self._hp is None:
-            self._hp = self.max_hp
-        if self._mp is None: # 追加
-            self._mp = self.max_mp # 追加
+    _mp = db.Column("mp", db.Integer)
 
     # 派生ステータス (DBには保存されない)
     @property
@@ -104,16 +97,16 @@ class Character(db.Model):
         self._hp = max(0, min(value, self.max_hp))
 
     @property
-    def max_mp(self): # 追加
+    def max_mp(self):
         # 仮の計算式: 最大MP = 賢さ * 3 + レベル * 3
         return self.intelligence * 3 + self.level * 3
 
     @property
-    def mp(self): # 追加
+    def mp(self):
         return self._mp
 
     @mp.setter
-    def mp(self, value): # 追加
+    def mp(self, value):
         self._mp = max(0, min(value, self.max_mp))
 
     def add_exp(self, exp_to_add):
@@ -184,7 +177,6 @@ class Character(db.Model):
     
     # キャラクター画像
     image_url = db.Column(db.String(255), default="Farah.png")
-
 class Enemy(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
@@ -193,7 +185,7 @@ class Enemy(db.Model):
     defense = db.Column(db.Integer, nullable=False)
     agility = db.Column(db.Integer, nullable=False)
     exp_yield = db.Column(db.Integer, nullable=False)
-    image_url = db.Column(db.String(255), nullable=False)
+    image_url = db.Column(db.String(255), nullable=False) # image_url を追加
 
 class Dungeon(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -253,8 +245,13 @@ def login():
                 luck=lv1_stats.get('luk', 10),
                 charisma=lv1_stats.get('vis', 10)
             )
-            # HPの初期値を設定
+            # 明示的にレベルと体力を設定 (max_hpアクセス前に属性を確実に設定するため)
+            character.level = lv1_stats.get('lv', 1)
+            character.vitality = lv1_stats.get('vit', 10)
+
+            # HPとMPの初期値を設定
             character.hp = character.max_hp
+            character.mp = character.max_mp
 
             db.session.add(character)
             db.session.commit()
@@ -266,13 +263,15 @@ def login():
         print(f"------------------------------------")
         return jsonify({'success': True, 'username': user.username})
 
-    except auth.InvalidIdTokenError:
-        print(f"Firebase Invalid ID Token Error: {id_token}") # 追加
+    except auth.InvalidIdTokenError as e: # Exceptionをキャプチャ
+        print(f"Firebase Invalid ID Token Error: {e}") # Exceptionをそのまま表示
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'message': 'Invalid ID token'}), 401
     except Exception as e:
         print(f"Login error: {e}")
-        import traceback # 追加
-        traceback.print_exc() # 追加
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'message': 'An error occurred during login'}), 500
 
 @app.route('/logout')
@@ -306,7 +305,7 @@ def get_character_data():
         db.session.add(character)
         db.session.commit()
 
-    print(f"DEBUG: Character data before jsonify: {character.username}, Level: {character.level}, HP: {character.hp}/{character.max_hp}, MP: {character.mp}/{character.max_mp}, Image: {character.image_url}") # 追加
+    print(f"DEBUG: Character data before jsonify: {current_user.username}, Level: {character.level}, HP: {character.hp}/{character.max_hp}, MP: {character.mp}/{character.max_mp}, Image: {character.image_url}") # 追加
 
     character_data = {
         'username': current_user.username,

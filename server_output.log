@@ -1,4 +1,4 @@
---- Credentials object created: <firebase_admin.credentials.Certificate object at 0x00000221A7DB12B0> ---
+--- Credentials object created: <firebase_admin.credentials.Certificate object at 0x000001775EC012B0> ---
 Attempting to initialize Firebase Admin SDK...
 Firebase Admin SDK initialized successfully.
 Database tables created.
@@ -20,16 +20,69 @@ Press CTRL+C to quit
  * Restarting with stat
  * Debugger is active!
  * Debugger PIN: 142-329-085
-127.0.0.1 - - [29/Oct/2025 08:08:54] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [29/Oct/2025 08:08:54] "GET /static/player.js HTTP/1.1" 304 -
-127.0.0.1 - - [29/Oct/2025 08:08:54] "GET /static/style.css?v=27 HTTP/1.1" 304 -
-127.0.0.1 - - [29/Oct/2025 08:08:54] "GET /static/adventure.js HTTP/1.1" 304 -
-127.0.0.1 - - [29/Oct/2025 08:08:54] "GET /static/home.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Oct/2025 08:08:54] "GET /static/screens.js HTTP/1.1" 304 -
-127.0.0.1 - - [29/Oct/2025 08:08:54] "GET /static/register.js HTTP/1.1" 304 -
-127.0.0.1 - - [29/Oct/2025 08:08:54] "GET /static/main.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Oct/2025 08:08:54] "GET /static/firebase-init.js HTTP/1.1" 304 -
-127.0.0.1 - - [29/Oct/2025 08:08:54] "GET /api/character HTTP/1.1" 401 -
-127.0.0.1 - - [29/Oct/2025 08:08:54] "GET /favicon.ico HTTP/1.1" 404 -
-127.0.0.1 - - [29/Oct/2025 08:09:01] "GET /static/style.css?v=27 HTTP/1.1" 304 -
-127.0.0.1 - - [29/Oct/2025 08:09:01] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
+127.0.0.1 - - [30/Oct/2025 00:43:53] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [30/Oct/2025 00:43:53] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
+127.0.0.1 - - [30/Oct/2025 00:43:53] "GET /static/home.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:53] "GET /static/screens.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:53] "GET /static/firebase-init.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:53] "GET /static/player.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:53] "GET /static/register.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:53] "GET /static/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [30/Oct/2025 00:43:53] "GET /static/style.css?v=27 HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:53] "GET /static/adventure.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:53] "GET /api/character HTTP/1.1" 200 -
+127.0.0.1 - - [30/Oct/2025 00:43:54] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [30/Oct/2025 00:43:54] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
+127.0.0.1 - - [30/Oct/2025 00:43:54] "GET /static/style.css?v=27 HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:54] "GET /static/screens.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:54] "GET /static/player.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:54] "GET /static/adventure.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:54] "GET /static/home.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:54] "GET /static/register.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:54] "GET /static/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:54] "GET /static/firebase-init.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:54] "GET /api/character HTTP/1.1" 200 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/style.css?v=27 HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/player.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/register.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/screens.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/home.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/adventure.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/firebase-init.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /api/character HTTP/1.1" 200 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/style.css?v=27 HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/player.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/screens.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/home.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/register.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/adventure.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/firebase-init.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /api/character HTTP/1.1" 200 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/style.css?v=27 HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/register.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/home.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/screens.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/player.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/adventure.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/firebase-init.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /api/character HTTP/1.1" 200 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/style.css?v=27 HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/home.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/register.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/player.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/adventure.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/screens.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /static/firebase-init.js HTTP/1.1" 304 -
+127.0.0.1 - - [30/Oct/2025 00:43:55] "GET /api/character HTTP/1.1" 200 -

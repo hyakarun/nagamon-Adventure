@@ -170,7 +170,7 @@ export function stopHpRecovery() {
 }
 
 export function initHomeScreen() {
-    loadAndDisplayCharacterData();
+    loadAndDisplayCharacterData(); // 認証後に呼び出されるように変更
     const innButton = document.getElementById('inn-button');
     if (innButton) {
         innButton.addEventListener('click', async () => {

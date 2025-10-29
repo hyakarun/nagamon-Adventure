@@ -54,67 +54,6 @@ body {
     height: 100%;
 }
 
-#left-panel h1 {
-    text-align: center;
-    color: #e0e0e0;
-    margin-bottom: 1.5em;
-}
-
-.character-panel {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.character-image {
-    width: 300px;
-    height: 300px;
-    object-fit: cover;
-    border-radius: 5px;
-    border: 1px solid #555;
-}
-
-.character-slot {
-    width: 300px;
-    height: 300px;
-    border: 1px dashed #666;
-    border-radius: 5px;
-    background-color: #333;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #999;
-    font-size: 1.5em;
-}
-
-.middle-panel {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 20px;
-}
-
-.equipment-panel, .status-panel {
-    flex: 1;
-    border: 1px solid #444;
-    padding: 15px;
-    border-radius: 5px;
-    background-color: #333;
-}
-
-.skills-panel {
-    display: flex;
-    gap: 20px;
-}
-
-.active-skills-panel, .passive-skills-panel {
-    flex: 1;
-    border: 1px solid #444;
-    padding: 15px;
-    border-radius: 5px;
-    background-color: #333;
-}
-
 .actions-panel {
     height: 40%;
     padding: 15px;

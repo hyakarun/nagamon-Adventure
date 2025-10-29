@@ -85,7 +85,7 @@ if (showLoginLink) {
 // --- Helper Functions ---
 
 async function handleSuccessfulLogin(user, username = null) {
-    const idToken = await user.getIdToken();
+    const idToken = await user.getIdToken(true); // 強制的にトークンを更新
     const body = { idToken };
     if (username) {
         body.username = username;
@@ -104,7 +104,7 @@ async function handleSuccessfulLogin(user, username = null) {
 
         if (response.ok) {
             console.log("バックエンドログイン成功:", data.username);
-            showHomeScreen();
+            window.location.href = '/'; // ホームページにリダイレクト
         } else {
             console.error("バックエンドログイン失敗:", data.message);
             alert("ログインに失敗しました: " + data.message);

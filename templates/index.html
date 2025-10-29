@@ -4,106 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>テキストアドベンチャー</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=27">
+    <link rel="stylesheet" href="../static/style.css?v=27">
 </head>
 <body>
 
-    <div id="main-container" class="screen hidden">
-        <div id="left-panel">
-            <h1>冒険者の家</h1>
-            <div class="character-panel">
-                <img id="character-image-1" src="" alt="キャラクター画像1" class="character-image">
-                <div class="character-slot"></div>
-                <div class="character-slot"></div>
-            </div>
-            <div class="middle-panel">
-                <div class="equipment-panel">
-                    <h3>装備</h3>
-                    <p>右手: <span id="equip-right-hand"></span></p>
-                    <p>左手: <span id="equip-left-hand"></span></p>
-                    <p>頭: <span id="equip-head"></span></p>
-                    <p>顔(上): <span id="equip-face-upper"></span></p>
-                    <p>顔(中): <span id="equip-face-middle"></span></p>
-                    <p>顔(下): <span id="equip-face-lower"></span></p>
-                    <p>耳: <span id="equip-ears"></span></p>
-                    <p>体: <span id="equip-body"></span></p>
-                    <p>腕: <span id="equip-arms"></span></p>
-                    <p>手: <span id="equip-hands"></span></p>
-                    <p>腰: <span id="equip-waist"></span></p>
-                    <p>足: <span id="equip-legs"></span></p>
-                    <p>靴: <span id="equip-shoes"></span></p>
-                    <p>アクセ1: <span id="equip-accessory1"></span></p>
-                    <p>アクセ2: <span id="equip-accessory2"></span></p>
-                </div>
-                <div class="status-panel">
-                    <h3>ステータス</h3>
-                    <p>名前: <span id="char-username"></span></p>
-                    <p>LV: <span id="char-level"></span></p>
-                    <p>経験値: <span id="char-current-exp"></span> / <span id="char-required-exp"></span></p>
-                    <p>所持金: <span id="char-money"></span>G</p>
-                    <p>HP: <span id="char-hp"></span> / <span id="char-max-hp"></span></p>
-                    <p>攻撃力: <span id="char-attack"></span></p>
-                    <p>防御力: <span id="char-defense"></span></p>
-                    <p>力: <span id="char-strength"></span></p>
-                    <p>体力: <span id="char-vitality"></span></p>
-                    <p>賢さ: <span id="char-intelligence"></span></p>
-                    <p>素早さ: <span id="char-agility"></span></p>
-                    <p>運の良さ: <span id="char-luck"></span></p>
-                    <p>かっこよさ: <span id="char-charisma"></span></p>
-                </div>
-            </div>
-            <div class="skills-panel">
-                <div class="active-skills-panel">
-                    <h3>アクティブスキル</h3>
-                    <p><span id="active-skills"></span></p>
-                </div>
-                <div class="passive-skills-panel">
-                    <h3>パッシブスキル</h3>
-                    <p><span id="passive-skills"></span></p>
-                </div>
-            </div>
-        </div>
-        <div id="right-panel">
-            <div class="actions-panel">
-                <h3>コンテンツ</h3>
-                <div class="action-item">
-                    <label for="dungeon-select">冒険:</label>
-                    <select id="dungeon-select">
-                    </select>
-                    <button id="adventure-button" class="action-button">冒険へ</button>
-                </div>
-                <div class="action-item">
-                    <button class="action-button">装備</button>
-                </div>
-                <div class="action-item">
-                    <button class="action-button">プロフィール</button>
-                </div>
-                <div class="action-item">
-                    <button class="action-button" id="inn-button">宿屋</button>
-                </div>
-                 <div class="action-item">
-                    <a href="/logout">ログアウト</a>
-                </div>
-            </div>
-            <div id="adventure-screen" class="screen hidden">
-                <h1>戦闘</h1>
-                <div id="battle-status-area"></div>
-                <div id="battle-log-area"></div>
-                <div id="battle-result-area"></div>
-            </div>
-        </div>
+    <div id="main-container" class="screen">
+        <!-- ... -->
     </div>
 
-    <script type="module" src="{{ url_for('static', filename='player.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='screens.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='register.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='home.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='adventure.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='main.js') }}"></script>
+                <div class="actions-panel">
+                    <h3>コンテンツ</h3>
+                    <div class="action-item">
+                        <label for="dungeon-select">冒険:</label>
+                        <select id="dungeon-select">
+                        </select>
+                        <button id="adventure-button" class="action-button">冒険へ</button>
+                    </div>
+                    <div class="action-item">
+                        <button class="action-button">装備</button>
+                    </div>
+                    <div class="action-item">
+                        <button class="action-button">プロフィール</button>
+                    </div>
+                    <div class="action-item">
+                        <button class="action-button" id="inn-button">宿屋</button>
+                    </div>
+                     <div class="action-item">
+                        <a href="/logout">ログアウト</a>
+                    </div>
+                </div>
+            <div id="adventure-screen" class="screen">
+                
+
+
+
+    <script type="module" src="../static/player.js"></script>
+    <script type="module" src="../static/screens.js"></script>
+    <script type="module" src="../static/register.js"></script>
+    <script type="module" src="../static/home.js"></script>
+    <script type="module" src="../static/adventure.js"></script>
+    <script type="module" src="../static/main.js"></script>
     <!-- Firebase SDK CDN -->
     <script type="module" src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
     <script type="module" src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
-    <script type="module" src="{{ url_for('static', filename='firebase-init.js') }}"></script>
+    <script type="module" src="../static/firebase-init.js"></script>
 
     <div id="login-screen" class="screen">
         <h2>ログイン</h2>
